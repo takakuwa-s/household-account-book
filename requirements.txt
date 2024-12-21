@@ -1,0 +1,3 @@
+line-bot-sdk
+pytest
+python-dotenv

@@ -169,3 +169,12 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# aws lambda artifacts
+*.zip
+
+# python libraries for aws lambda
+python/
+
+# envファイル
+.env
