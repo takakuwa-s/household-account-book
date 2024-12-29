@@ -1,0 +1,62 @@
+{
+  "[message_not_found_error]": [
+    {
+      "type": "text",
+      "text": "ごめんなさい！よく分からないです..."
+    },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551379"
+    }
+  ],
+  "[unknown_error]": [
+    {
+      "type": "text",
+      "text": "ごめんなさい！不明なエラーが発生しました\n\n時間をおいて再度お試し下さい"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551385"
+    },
+    {
+      "type": "text",
+      "text": "エラー詳細:\n\n{error}"
+    }
+  ],
+  "[group_error]": [
+    {
+      "type": "text",
+      "text": "ごめんなさい!個人LINEにのみ対応しています$"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551379"
+    }
+  ],
+  "[image_set_error]": [
+    {
+      "type": "text",
+      "text": "複数の写真を一度に送らないで下さい。。。処理できません"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551379"
+    }
+  ],
+  "[image]": [
+    {
+      "type": "text",
+      "text": "TBD"
+    }
+  ],
+  "あ": [
+    {
+      "type": "text",
+      "text": "ああああああ"
+    }
+  ]
+}
