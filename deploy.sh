@@ -7,7 +7,7 @@
 # fi
 
 rm submit_reciepts.zip
-zip -r submit_reciepts.zip . -x "*.git*" -x "*.sh" -x "*.zip" -x "*.txt" -x "*.md"  -x ".pytest_cache/*"  -x "*__pycache__/*" -x "layer/*"  -x ".pytest_cache/*" -x ".ruff_cache/*"
+zip -r submit_reciepts.zip . -x "*.git*" -x "*.sh" -x "*.zip" -x "*.txt" -x "*.md"  -x ".pytest_cache/*"  -x "*__pycache__/*" -x "layer/*"  -x ".pytest_cache/*" -x ".ruff_cache/*" -x ".venv/*"
 
 # lambda関数のアップデート
 aws lambda update-function-code --function-name submit_reciepts --zip-file fileb://submit_reciepts.zip

@@ -50,7 +50,11 @@
   "[image]": [
     {
       "type": "text",
-      "text": "TBD"
+      "text": "処理が成功しました"
+    },
+    {
+      "type": "text",
+      "text": "{result}"
     }
   ],
   "あ": [
