@@ -178,3 +178,6 @@ python/
 
 # envファイル
 .env
+
+# gcpの認証ファイル
+resource/gcp-credentials.json

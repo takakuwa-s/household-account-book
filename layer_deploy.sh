@@ -24,13 +24,13 @@ aws lambda publish-layer-version \
   --compatible-architectures "arm64"
 
 # layerの削除
-aws lambda delete-layer-version --layer-name pip-package-layer --version-number 12
+aws lambda delete-layer-version --layer-name pip-package-layer --version-number 14
 
 # layerの指定
 aws lambda update-function-configuration \
   --function-name submit_reciepts \
   --layers \
-    "arn:aws:lambda:ap-northeast-1:101037559230:layer:pip-package-layer:13"
+    "arn:aws:lambda:ap-northeast-1:101037559230:layer:pip-package-layer:14"
 
 # 仮想環境の有効化解除
 deactivate

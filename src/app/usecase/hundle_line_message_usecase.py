@@ -5,8 +5,9 @@ from linebot.v3.webhooks.models.image_message_content import ImageMessageContent
 from linebot.v3.webhooks.models.text_message_content import TextMessageContent
 
 from src.app.adaptor.azure_ducument_intelligence_client import analyze_receipt
+from src.app.adaptor.google_sheets_api_adaptor import append_house_hold_account_book
 from src.app.adaptor.line_messaging_api_adaptor import fetch_image
-from src.app.model.usecase_model import ReceiptResult
+from src.app.model.usecase_model import AccountBookInput, ReceiptResult
 
 MESSAGE_JSON_PATH = "resource/message.json"
 
@@ -52,12 +53,14 @@ class HundleLineMessageUsecase:
         data = fetch_image(message.id)
         print("lineからのイメージデータを取得しました。")
         result: ReceiptResult = analyze_receipt(data)
-        print(result)
+        input: AccountBookInput = AccountBookInput()
+        input.receipt_results = result
+        append_house_hold_account_book(input)
         response_messages = self.message_pool.get("[image]")
         response_messages[1]["text"] = response_messages[1]["text"].replace(
-            "{result}", str(result)
+            "{result}", input.to_string()
         )
-        return self.message_pool["[image]"]
+        return response_messages
 
     @to_message
     def handle_default_event(self) -> list[Message]:
@@ -69,5 +72,8 @@ def register_expenditure():
     with open(file_path, "rb") as image_file:
         data = image_file.read()
 
-    result: ReceiptResult = analyze_receipt(data)
-    print(result)
+    results: list[ReceiptResult] = analyze_receipt(data)
+    input: AccountBookInput = AccountBookInput()
+    input.receipt_results = results
+    print(input.to_string())
+    append_house_hold_account_book(input)
