@@ -1,5 +1,5 @@
 from src.app.functions.submit_reciepts import callback
-from src.app.usecase.hundle_line_message_usecase import register_expenditure
+from src.app.usecase.hundle_line_message_usecase import test
 
 
 def main(event, context):
@@ -7,4 +7,4 @@ def main(event, context):
 
 
 # if __name__ == "__main__":
-#     register_expenditure()
+#     test()

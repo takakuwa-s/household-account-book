@@ -46,11 +46,11 @@ def append_data_to_spreadsheet(spreadsheet_id, sheet_name, data_list):
     )
 
 
-def append_house_hold_account_book(input: AccountBookInput):
+def register_expenditure(input: AccountBookInput):
     """
-    家計簿のデータをスプレッドシートに追加します。
+    家計簿のスプレッドシートに支出データを追加します。
     Args:
-        input: 家計簿のデータ。
+        input: 支出データ。
     """
     data = []
     for result in input.receipt_results:
