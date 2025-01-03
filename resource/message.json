@@ -47,14 +47,81 @@
       "stickerId": "10551379"
     }
   ],
-  "[image]": [
+  "[postback_error]": [
     {
       "type": "text",
-      "text": "下記内容でレシートを家計簿に登録しました"
+      "text": "不明なポストバックイベントが発生しました。開発者に連携をお願いします"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551379"
+    }
+  ],
+  "[confirm_expenditure]": [
+    {
+      "type": "text",
+      "text": "下記内容でレシートを家計簿に登録しますか？"
     },
     {
       "type": "text",
-      "text": "{result}"
+      "text": ""
+    }
+    ,
+    {
+      "type": "text",
+      "text": ""
+    },
+    {
+      "type": "template",
+      "altText": "家計簿登録確認",
+      "template": {
+        "type": "carousel",
+        "columns": [
+          {
+            "title": "家計簿登録",
+            "text": "上記内容で、家計簿に登録します",
+            "actions": [
+              {
+                "type": "postback",
+                "label": "登録",
+                "data": "",
+                "displayText": "家計簿に登録します"
+              }
+            ]
+          },
+          {
+            "title": "登録キャンセル",
+            "text": "家計簿登録をキャンセルします",
+            "actions": [
+              {
+                "type": "postback",
+                "label": "キャンセル",
+                "data": "",
+                "displayText": "家計簿登録をキャンセルします"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "[register]": [
+    {
+      "type": "text",
+      "text": "頂いた内容でレシートを家計簿に登録しました"
+    }
+  ],
+  "[not_found_expenditure_error]": [
+    {
+      "type": "text",
+      "text": "登録するレシート情報が存在しません"
+    }
+  ],
+  "[cancel]": [
+    {
+      "type": "text",
+      "text": "キャンセルしました"
     }
   ],
   "あ": [

@@ -8,6 +8,9 @@ import csv
 from src.app.repository.item_classification_table_repository import (
     ItemClassificationTableRepository,
 )
+from src.app.repository.temporal_expenditure_table_repository import (
+    TemporalExpenditureTableRepository,
+)
 
 # DynamoDBリソースの作成
 dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
@@ -31,9 +34,9 @@ def read_csv_to_list(filepath: str) -> list[list]:
     return data
 
 
-def create_tables():
+def create_item_classification_table():
     """
-    テーブルの作成を行う。
+    ItemClassificationテーブルの作成を行う。
     """
     repository = ItemClassificationTableRepository(dynamodb)
     # repository.drop_table()
@@ -51,5 +54,17 @@ def create_tables():
     print(repository.get_all())
 
 
+def create_temporal_expenditure_table():
+    """
+    TemporalExpenditureテーブルの作成を行う。
+    """
+    repository = TemporalExpenditureTableRepository(dynamodb)
+    # repository.drop_table()
+    # repository.create_table()
+    # repository.delete_item("9b23538f-4924-481c-b8b3-ee0e78436284")
+    print(repository.get_all())
+
+
 if __name__ == "__main__":
-    create_tables()
+    # create_item_classification_table()
+    create_temporal_expenditure_table()

@@ -63,6 +63,7 @@ def analyze_receipt(data: bytes) -> list[ReceiptResult]:
                 )
                 if price is None:
                     continue
+                price = int(price)
                 sum += price
                 if price < 0:
                     receipt.items[-1].price += price

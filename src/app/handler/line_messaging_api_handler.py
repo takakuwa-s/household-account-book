@@ -11,7 +11,7 @@ from linebot.v3.messaging import (
     MessagingApi,
     ReplyMessageRequest,
 )
-from linebot.v3.webhooks import MessageEvent, ImageMessageContent
+from linebot.v3.webhooks import MessageEvent, ImageMessageContent, PostbackEvent
 from linebot.v3.webhooks.models.text_message_content import TextMessageContent
 from src.app.usecase.hundle_line_message_usecase import HundleLineMessageUsecase
 
@@ -54,6 +54,15 @@ def handle_text_message(event: MessageEvent):
 def handle_image_message(event: MessageEvent):
     if event.source.type == "user":
         messages = usecase.handle_image_message(event.message, event.source.user_id)
+    else:
+        messages = usecase.group_message()
+    reply_message(event.reply_token, messages)
+
+
+@handler.add(PostbackEvent)
+def handle_postback_event(event: PostbackEvent):
+    if event.source.type == "user":
+        messages = usecase.handle_postback_event(event.postback)
     else:
         messages = usecase.group_message()
     reply_message(event.reply_token, messages)

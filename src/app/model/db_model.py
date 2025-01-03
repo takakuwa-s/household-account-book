@@ -1,4 +1,16 @@
+import time
+import uuid
 from pydantic import BaseModel, Field
+from src.app.model import usecase_model as uc
+
+
+def calculate_ttl_timestamp() -> int:
+    """
+    TTLのタイムスタンプを計算します。
+    Returns:
+        int: TTLのタイムスタンプ
+    """
+    return int(time.time()) + 60 * 60 * 24 * 30
 
 
 class BaseTable(BaseModel):
@@ -34,6 +46,24 @@ class ItemClassification(BaseTable):
     @staticmethod
     def get_parttion_key() -> tuple[str, str, str]:
         return "minor", "HASH", "S"
+
+    @staticmethod
+    def get_sort_key() -> tuple[str, str, str]:
+        return None
+
+
+class TemporalExpenditure(BaseTable):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))  # パーティションキー
+    data: uc.AccountBookInput = Field(default=uc.AccountBookInput())
+    ttl_timestamp: int = Field(default_factory=calculate_ttl_timestamp)
+
+    @staticmethod
+    def get_name() -> str:
+        return "temporal_expenditure"
+
+    @staticmethod
+    def get_parttion_key() -> tuple[str, str, str]:
+        return "id", "HASH", "S"
 
     @staticmethod
     def get_sort_key() -> tuple[str, str, str]:
