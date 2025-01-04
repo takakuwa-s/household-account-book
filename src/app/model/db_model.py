@@ -38,6 +38,7 @@ class BaseTable(BaseModel):
 class ItemClassification(BaseTable):
     minor: str = Field(default="")  # パーティションキー
     major: str = Field(default="")
+    color: str = Field(default="")
 
     @staticmethod
     def get_name() -> str:

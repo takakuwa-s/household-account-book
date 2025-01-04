@@ -1,7 +1,11 @@
 from linebot.v3.messaging.models.message import Message
 from linebot.v3.webhooks.models.image_message_content import ImageMessageContent
 from linebot.v3.webhooks.models.text_message_content import TextMessageContent
+from linebot.v3.webhooks.models.postback_content import PostbackContent
 from src.app.usecase.hundle_line_message_usecase import HundleLineMessageUsecase
+from src.app.model import (
+    usecase_model as uc,
+)
 
 
 def test_group_message():
@@ -46,4 +50,18 @@ def test_handle_text_message():
     )
     print(reslut)
     assert len(reslut) > 0
-    # assert type(reslut[0]) == "dict"
+
+
+def test_handle_postback_event():
+    usecase = HundleLineMessageUsecase()
+
+    data = uc.RegisterExpenditurePostback(
+        **{
+            "id": "444573844083572737",
+            "type": "change_classification",
+        }
+    )
+    postback = PostbackContent(data=data.model_dump_json())
+    reslut: list[Message] = usecase.handle_postback_event(postback)
+    print(reslut)
+    assert len(reslut) > 0

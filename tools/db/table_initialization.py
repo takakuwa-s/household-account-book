@@ -48,6 +48,7 @@ def create_item_classification_table():
         item_dict = {
             "minor": item[1],
             "major": item[0],
+            "color": item[2],
         }
         repository.put_item(item_dict)
 
@@ -66,5 +67,5 @@ def create_temporal_expenditure_table():
 
 
 if __name__ == "__main__":
-    # create_item_classification_table()
-    create_temporal_expenditure_table()
+    create_item_classification_table()
+    # create_temporal_expenditure_table()

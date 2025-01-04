@@ -8,6 +8,14 @@ class PaymentMethodEnum(str, Enum):
     ADVANCE_PAYMENT = "建て替え"
     FAMILY_CARD = "家族カード"
 
+    @classmethod
+    def value_of(cls, key_name: str) -> "PaymentMethodEnum":
+        for name, enum in cls.__members__.items():
+            if key_name == name:
+                return enum
+        else:
+            raise ValueError(f"'{key_name}' enum not found")
+
 
 class ReceiptResult(BaseModel):
     class Item(BaseModel):
@@ -99,6 +107,15 @@ class AccountBookInput(BaseModel):
 
 class PostbackEventTypeEnum(str, Enum):
     REGISTER_EXPENDITURE = "register_expenditure"
+    CHANGE_CLASSIFICATION = "change_classification"
+    UPDATE_CLASSIFICATION = "update_classification"
+    CHANGE_FOR_WHOM = "change_for_whom"
+    UPDATE_FOR_WHOM = "update_for_whom"
+    CHANGE_PAYER = "change_payer"
+    UPDATE_PAYER = "update_payer"
+    CHANGE_DATE = "change_date"
+    CHANGE_PAYMENT_METHOD = "change_payment_method"
+    UPDATE_PAYMENT_METHOD = "update_payment_method"
     CANCEL = "cancel"
 
 
@@ -107,8 +124,4 @@ class RegisterExpenditurePostback(BaseModel):
         default=PostbackEventTypeEnum.REGISTER_EXPENDITURE
     )
     id: str = Field(default="")
-
-
-class CancelPostback(BaseModel):
-    type: PostbackEventTypeEnum = Field(default=PostbackEventTypeEnum.CANCEL)
-    id: str = Field(default="")
+    updated_item: Optional[str] = Field(default=None)

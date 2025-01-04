@@ -66,41 +66,195 @@
     {
       "type": "text",
       "text": ""
-    }
-    ,
+    },
     {
       "type": "text",
       "text": ""
     },
     {
-      "type": "template",
+      "type": "flex",
       "altText": "家計簿登録確認",
-      "template": {
-        "type": "carousel",
-        "columns": [
-          {
-            "title": "家計簿登録",
-            "text": "上記内容で、家計簿に登録します",
-            "actions": [
-              {
+      "contents": {
+        "type": "bubble",
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "家計簿登録確認",
+              "weight": "bold",
+              "size": "xl"
+            },
+            {
+              "type": "text",
+              "text": "このまま登録するか、一部修正するかを選択してください",
+              "wrap": true
+            }
+          ]
+        },
+        "footer": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "button",
+              "style": "primary",
+              "action": {
                 "type": "postback",
                 "label": "登録",
                 "data": "",
                 "displayText": "家計簿に登録します"
               }
-            ]
-          },
-          {
-            "title": "登録キャンセル",
-            "text": "家計簿登録をキャンセルします",
-            "actions": [
-              {
+            },
+            {
+              "type": "button",
+              "action": {
+                "type": "postback",
+                "label": "項目変更",
+                "data": "",
+                "displayText": "大項目・小項目を変更します"
+              }
+            },
+            {
+              "type": "button",
+              "action": {
+                "type": "postback",
+                "label": "誰向け変更",
+                "data": "",
+                "displayText": "誰向けの支払いかを変更します"
+              }
+            },
+            {
+              "type": "button",
+              "action": {
+                "type": "postback",
+                "label": "支払い者変更",
+                "data": "",
+                "displayText": "支払い者を変更します"
+              }
+            },
+            {
+              "type": "button",
+              "action": {
+                "type": "datetimepicker",
+                "label": "日付修正",
+                "data": "",
+                "mode": "date",
+                "initial": "",
+                "max": "",
+                "min": "2020-01-01"
+              }
+            },
+            {
+              "type": "button",
+              "action": {
+                "type": "postback",
+                "label": "支払い方法変更",
+                "data": "",
+                "displayText": "支払い方法を変更します"
+              }
+            },
+            {
+              "type": "button",
+              "action": {
                 "type": "postback",
                 "label": "キャンセル",
                 "data": "",
                 "displayText": "家計簿登録をキャンセルします"
               }
-            ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "[change_classification]": [
+    {
+      "type": "flex",
+      "altText": "支払い項目の変更",
+      "contents": {
+        "type": "carousel",
+        "contents": []
+      }
+    }
+  ],
+  "[change_for_whom]": [
+    {
+      "type": "template",
+      "altText": "誰向けの変更",
+      "template": {
+        "type": "buttons",
+        "title": "Menu",
+        "text": "下記より誰向けの支払いかを選択して下さい",
+        "actions": [
+          {
+            "type": "postback",
+            "label": "くんに変更",
+            "data": "",
+            "displayText": "誰向けの支払いかをくんに変更します"
+          },
+          {
+            "type": "postback",
+            "label": "ちゃんに変更",
+            "data": "",
+            "displayText": "誰向けの支払いかをちゃんに変更します"
+          },
+          {
+            "type": "postback",
+            "label": "共通に変更",
+            "data": "",
+            "displayText": "誰向けの支払いかを共通に変更します"
+          }
+        ]
+      }
+    }
+  ],
+  "[change_payer]": [
+    {
+      "type": "template",
+      "altText": "支払い者の変更",
+      "template": {
+        "type": "buttons",
+        "title": "Menu",
+        "text": "下記より支払い者を選択して下さい",
+        "actions": [
+          {
+            "type": "postback",
+            "label": "くんに変更",
+            "data": "",
+            "displayText": "支払い者をくんに変更します"
+          },
+          {
+            "type": "postback",
+            "label": "ちゃんに変更",
+            "data": "",
+            "displayText": "支払い者をちゃんに変更します"
+          }
+        ]
+      }
+    }
+  ],
+  "[change_payment_method]": [
+    {
+      "type": "template",
+      "altText": "支払い方法の変更",
+      "template": {
+        "type": "buttons",
+        "title": "Menu",
+        "text": "下記より支払い方法を選択して下さい",
+        "actions": [
+          {
+            "type": "postback",
+            "label": "建て替えに変更",
+            "data": "",
+            "displayText": "支払い方法を建て替えに変更します"
+          },
+          {
+            "type": "postback",
+            "label": "家族カードに変更",
+            "data": "",
+            "displayText": "支払い方法を家族カードに変更します"
           }
         ]
       }

@@ -91,7 +91,7 @@ class BaseTableRepository:
             data: 追加するデータ
         """
         self.table.put_item(Item=data)
-        print("Item added successfully.")
+        print(f"Item added successfully, table name = {self.table_model.get_name()}")
 
     def get_all(self):
         """
