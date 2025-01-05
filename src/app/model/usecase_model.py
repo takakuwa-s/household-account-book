@@ -1,7 +1,6 @@
-import datetime
 from enum import Enum
-from typing import List, Optional
-from pydantic import BaseModel, Field, field_serializer
+from typing import Optional
+from pydantic import BaseModel, Field
 
 
 class PaymentMethodEnum(str, Enum):
@@ -23,14 +22,11 @@ class ReceiptResult(BaseModel):
         name: str = Field(default="")
         remarks: str = Field(default="LINE経由。")
 
-    items: List[Item] = Field(default=[])
+    items: list[Item] = Field(default=[])
     total: Optional[int] = Field(default=None)
-    date: datetime.date = Field(default="")
+    date: str = Field(default="")
     store: str = Field(default="")
-
-    @field_serializer("date")
-    def serialize_date(self, date: datetime.date) -> str:
-        return date.isoformat()
+    number_of_receipts: int = Field(default=0)
 
     def set_total(self, total: Optional[float]):
         """
@@ -58,10 +54,9 @@ class ReceiptResult(BaseModel):
             self.items.append(item)
 
 
-class AccountBookInput(BaseModel):
-    receipt_results: list[ReceiptResult] = Field(default=[])
-    major_classification: str = Field(default="")
-    minor_classification: str = Field(default="日用品")
+class AccountBookInput(ReceiptResult):
+    major_classification: str = Field(default="生活費")
+    minor_classification: str = Field(default="食費")
     payer: str = Field(default="くん")
     for_whom: str = Field(default="共通")
     payment_method: PaymentMethodEnum = Field(default=PaymentMethodEnum.ADVANCE_PAYMENT)
@@ -88,32 +83,36 @@ class AccountBookInput(BaseModel):
             家計簿登録用のレシートの情報の文字列
         """
         result = ""
-        for idx, receipt in enumerate(self.receipt_results):
+        result += (
+            f"【レシート解析結果】\n"
+            f"日付: {self.date}\n"
+            f"合計: {self.total}円\n"
+            f"店名: {self.store}\n"
+            "\n---詳細情報---\n"
+        )
+        sum = 0
+        for item in self.items:
+            sum += item.price
+            result += f"・{item.name}: {item.price}円\n"
+        if self.total is not None and sum != self.total:
+            result += f"\n※ 合計と各項目の和が一致しません。各項目の和: {sum}円\n"
+        if self.number_of_receipts > 1:
             result += (
-                f"【{idx+1}枚目のレシート情報】\n"
-                f"日付: {receipt.date}\n"
-                f"合計: {receipt.total}円\n"
-                f"店名: {receipt.store}\n"
-                "\n---詳細情報---\n"
+                "\n※ 複数のレシートが画像に見られましたが、1枚のみ解析しています。\n"
             )
-            sum = 0
-            for item in receipt.items:
-                sum += item.price
-                result += f"・{item.name}: {item.price}円\n"
-            if receipt.total is not None and sum != receipt.total:
-                result += f"※ 合計と各項目の和が一致しません。各項目の和: {sum}円\n"
         return result
 
 
 class PostbackEventTypeEnum(str, Enum):
     REGISTER_EXPENDITURE = "register_expenditure"
+    RELOAD_STATUS = "reload_status"
     CHANGE_CLASSIFICATION = "change_classification"
     UPDATE_CLASSIFICATION = "update_classification"
     CHANGE_FOR_WHOM = "change_for_whom"
     UPDATE_FOR_WHOM = "update_for_whom"
     CHANGE_PAYER = "change_payer"
     UPDATE_PAYER = "update_payer"
-    CHANGE_DATE = "change_date"
+    UPDATE_DATE = "update_date"
     CHANGE_PAYMENT_METHOD = "change_payment_method"
     UPDATE_PAYMENT_METHOD = "update_payment_method"
     CANCEL = "cancel"

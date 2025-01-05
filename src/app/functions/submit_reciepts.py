@@ -5,7 +5,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 from src.app.handler.line_messaging_api_handler import handler
 
 
-def callback(event, context):
+def lambda_handler(event, context):
     """
     AWS Lambdaのエントリーポイント。LINE Messaging APIのWebhookを受け取る。
     """

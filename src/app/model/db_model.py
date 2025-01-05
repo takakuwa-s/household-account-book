@@ -1,16 +1,19 @@
+from enum import Enum
 import time
 import uuid
 from pydantic import BaseModel, Field
 from src.app.model import usecase_model as uc
 
 
-def calculate_ttl_timestamp() -> int:
+def calculate_ttl_timestamp(delete_date: int = 30) -> int:
     """
     TTLのタイムスタンプを計算します。
+    Args:
+        delete_date (int): 何日後に削除するか
     Returns:
         int: TTLのタイムスタンプ
     """
-    return int(time.time()) + 60 * 60 * 24 * 30
+    return int(time.time()) + 60 * 60 * 24 * delete_date
 
 
 class BaseTable(BaseModel):
@@ -54,7 +57,14 @@ class ItemClassification(BaseTable):
 
 
 class TemporalExpenditure(BaseTable):
+    class Status(str, Enum):
+        ANALYZING = "ANALYZING"
+        ANALYZED = "ANALYZED"
+        INVALID_IMAGE = "INVALID_IMAGE"
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))  # パーティションキー
+    line_image_id: str = Field(default="")
+    status: Status = Field(default=Status.ANALYZING)
     data: uc.AccountBookInput = Field(default=uc.AccountBookInput())
     ttl_timestamp: int = Field(default_factory=calculate_ttl_timestamp)
 

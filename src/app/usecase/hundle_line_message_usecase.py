@@ -7,9 +7,8 @@ from linebot.v3.webhooks.models.image_message_content import ImageMessageContent
 from linebot.v3.webhooks.models.text_message_content import TextMessageContent
 from linebot.v3.webhooks.models.postback_content import PostbackContent
 
-from src.app.adaptor.azure_ducument_intelligence_client import analyze_receipt
 from src.app.adaptor.google_sheets_api_adaptor import register_expenditure
-from src.app.adaptor.line_messaging_api_adaptor import fetch_image
+from src.app.adaptor.sqs_adaptor import send_message_to_sqs
 from src.app.model import (
     db_model as db,
     usecase_model as uc,
@@ -70,21 +69,10 @@ class HundleLineMessageUsecase:
     ) -> list[Message]:
         if message.image_set is not None and message.image_set.id is not None:
             return self.message_pool["[image_set_error]"]
-        binary = fetch_image(message.id)
-        print("lineからのイメージデータを取得しました。")
-        result: list[uc.ReceiptResult] = analyze_receipt(binary)
+        record = db.TemporalExpenditure(line_image_id=message.id)
+        self.temporal_expenditure_table_repository.put_item(record.model_dump())
+        send_message_to_sqs(record.id)
 
-        input: uc.AccountBookInput = uc.AccountBookInput(receipt_results=result)
-        input.major_classification = (
-            self.item_classification_table_repository.get_major(
-                input.minor_classification
-            )
-        )
-        record: db.TemporalExpenditure = (
-            self.temporal_expenditure_table_repository.create_from_account_book_input(
-                input
-            )
-        )
         return self.__create_confirm_response(record)
 
     def __create_confirm_response(self, record: db.TemporalExpenditure) -> list[dict]:
@@ -95,65 +83,152 @@ class HundleLineMessageUsecase:
         Returns:
             list[dict]: 家計簿登録確認メッセージ
         """
+
+        if record.status == db.TemporalExpenditure.Status.INVALID_IMAGE:
+            return self.message_pool.get("[not_receipt_error]")
+
         response = self.message_pool.get("[confirm_expenditure]")
         response[1]["text"] = record.data.get_common_info()
-        response[2]["text"] = record.data.get_receipt_info()
+        if record.status == db.TemporalExpenditure.Status.ANALYZED:
+            response[2]["text"] = record.data.get_receipt_info()
+        else:
+            response[2]["text"] = "レシート解析中です。しばらくお待ちください。"
 
-        # 登録ボタンの設定
-        response[3]["contents"]["footer"]["contents"][0]["action"]["data"] = (
-            uc.RegisterExpenditurePostback(id=record.id).model_dump_json()
-        )
+        contents = []
+        if record.status == db.TemporalExpenditure.Status.ANALYZING:
+            # 更新ボタンの設定
+            contents.append(
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "解析ステータス更新",
+                        "data": (
+                            uc.RegisterExpenditurePostback(
+                                id=record.id,
+                                type=uc.PostbackEventTypeEnum.RELOAD_STATUS,
+                            ).model_dump_json()
+                        ),
+                        "displayText": "レシート解析ステータスを更新します",
+                    },
+                }
+            )
+        elif record.status == db.TemporalExpenditure.Status.ANALYZED:
+            # 登録ボタンの設定
+            contents.append(
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "登録",
+                        "data": uc.RegisterExpenditurePostback(
+                            id=record.id
+                        ).model_dump_json(),
+                        "displayText": "家計簿に登録します",
+                    },
+                }
+            )
 
         # 項目変更ボタンの設定
-        response[3]["contents"]["footer"]["contents"][1]["action"]["data"] = (
-            uc.RegisterExpenditurePostback(
-                id=record.id, type=uc.PostbackEventTypeEnum.CHANGE_CLASSIFICATION
-            ).model_dump_json()
+        contents.append(
+            {
+                "type": "button",
+                "action": {
+                    "type": "postback",
+                    "label": "項目変更",
+                    "data": uc.RegisterExpenditurePostback(
+                        id=record.id,
+                        type=uc.PostbackEventTypeEnum.CHANGE_CLASSIFICATION,
+                    ).model_dump_json(),
+                    "displayText": "大項目・小項目を変更します",
+                },
+            }
         )
 
         # 誰向け変更ボタンの設定
-        response[3]["contents"]["footer"]["contents"][2]["action"]["data"] = (
-            uc.RegisterExpenditurePostback(
-                id=record.id, type=uc.PostbackEventTypeEnum.CHANGE_FOR_WHOM
-            ).model_dump_json()
+        contents.append(
+            {
+                "type": "button",
+                "action": {
+                    "type": "postback",
+                    "label": "誰向け変更",
+                    "data": uc.RegisterExpenditurePostback(
+                        id=record.id, type=uc.PostbackEventTypeEnum.CHANGE_FOR_WHOM
+                    ).model_dump_json(),
+                    "displayText": "誰向けの支払いかを変更します",
+                },
+            }
         )
 
         # 支払い者変更ボタンの設定
-        response[3]["contents"]["footer"]["contents"][3]["action"]["data"] = (
-            uc.RegisterExpenditurePostback(
-                id=record.id, type=uc.PostbackEventTypeEnum.CHANGE_PAYER
-            ).model_dump_json()
+        contents.append(
+            {
+                "type": "button",
+                "action": {
+                    "type": "postback",
+                    "label": "支払い者変更",
+                    "data": uc.RegisterExpenditurePostback(
+                        id=record.id, type=uc.PostbackEventTypeEnum.CHANGE_PAYER
+                    ).model_dump_json(),
+                    "displayText": "支払い者を変更します",
+                },
+            }
         )
-
-        # 日付変更ボタンの設定
-        datetimepicker_action = response[3]["contents"]["footer"]["contents"][4][
-            "action"
-        ]
-        if (
-            len(record.data.receipt_results) > 0
-            and record.data.receipt_results[0].date is not None
-        ):
-            datetimepicker_action["initial"] = record.data.receipt_results[
-                0
-            ].date.isoformat()
-        datetimepicker_action["max"] = datetime.date.today().isoformat()
-        datetimepicker_action["data"] = uc.RegisterExpenditurePostback(
-            id=record.id, type=uc.PostbackEventTypeEnum.CHANGE_DATE
-        ).model_dump_json()
 
         # 支払い方法変更ボタンの設定
-        response[3]["contents"]["footer"]["contents"][5]["action"]["data"] = (
-            uc.RegisterExpenditurePostback(
-                id=record.id, type=uc.PostbackEventTypeEnum.CHANGE_PAYMENT_METHOD
-            ).model_dump_json()
+        contents.append(
+            {
+                "type": "button",
+                "action": {
+                    "type": "postback",
+                    "label": "支払い方法変更",
+                    "data": uc.RegisterExpenditurePostback(
+                        id=record.id,
+                        type=uc.PostbackEventTypeEnum.CHANGE_PAYMENT_METHOD,
+                    ).model_dump_json(),
+                    "displayText": "支払い方法を変更します",
+                },
+            }
         )
 
+        if record.status == db.TemporalExpenditure.Status.ANALYZED:
+            # 日付変更ボタンの設定
+            contents.append(
+                {
+                    "type": "button",
+                    "action": {
+                        "type": "datetimepicker",
+                        "label": "日付修正",
+                        "data": uc.RegisterExpenditurePostback(
+                            id=record.id, type=uc.PostbackEventTypeEnum.UPDATE_DATE
+                        ).model_dump_json(),
+                        "mode": "date",
+                        "initial": record.data.date,
+                        "max": datetime.date.today().isoformat(),
+                        "min": "2020-01-01",
+                    },
+                }
+            )
+
         # キャンセルボタンの設定
-        response[3]["contents"]["footer"]["contents"][6]["action"]["data"] = (
-            uc.RegisterExpenditurePostback(
-                id=record.id, type=uc.PostbackEventTypeEnum.CANCEL
-            ).model_dump_json()
+        contents.append(
+            {
+                "type": "button",
+                "action": {
+                    "type": "postback",
+                    "label": "キャンセル",
+                    "data": (
+                        uc.RegisterExpenditurePostback(
+                            id=record.id, type=uc.PostbackEventTypeEnum.CANCEL
+                        ).model_dump_json()
+                    ),
+                    "displayText": "家計簿登録をキャンセルします",
+                },
+            }
         )
+        response[3]["contents"]["footer"]["contents"] = contents
         return response
 
     @to_message
@@ -164,6 +239,8 @@ class HundleLineMessageUsecase:
                 return self.__register_expenditure(
                     uc.RegisterExpenditurePostback(**data)
                 )
+            case uc.PostbackEventTypeEnum.RELOAD_STATUS:
+                return self.__reload_status(uc.RegisterExpenditurePostback(**data))
             case uc.PostbackEventTypeEnum.CHANGE_CLASSIFICATION:
                 return self.__change_classification(
                     uc.RegisterExpenditurePostback(**data)
@@ -180,8 +257,8 @@ class HundleLineMessageUsecase:
                 return self.__change_payer(uc.RegisterExpenditurePostback(**data))
             case uc.PostbackEventTypeEnum.UPDATE_PAYER:
                 return self.__update_payer(uc.RegisterExpenditurePostback(**data))
-            case uc.PostbackEventTypeEnum.CHANGE_DATE:
-                return self.__change_date(
+            case uc.PostbackEventTypeEnum.UPDATE_DATE:
+                return self.__update_date(
                     uc.RegisterExpenditurePostback(**data), postback.params["date"]
                 )
             case uc.PostbackEventTypeEnum.CHANGE_PAYMENT_METHOD:
@@ -210,18 +287,31 @@ class HundleLineMessageUsecase:
         response = self.message_pool.get("[register]")
         return response
 
-    def __change_date(
-        self, data: uc.RegisterExpenditurePostback, date_str: str
+    def __reload_status(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
+        record: db.TemporalExpenditure = (
+            self.temporal_expenditure_table_repository.get_item(data.id)
+        )
+        if record is None:
+            return self.message_pool.get("[not_found_expenditure_error]")
+        return self.__create_confirm_response(record)
+
+    def __update_date(
+        self, data: uc.RegisterExpenditurePostback, date: str
     ) -> list[dict]:
         record: db.TemporalExpenditure = (
             self.temporal_expenditure_table_repository.get_item(data.id)
         )
         if record is None:
             return self.message_pool.get("[not_found_expenditure_error]")
-        date = datetime.date.fromisoformat(date_str)
-        for receipt in record.data.receipt_results:
-            receipt.date = date
-        self.temporal_expenditure_table_repository.put_item(record.model_dump())
+        record = self.temporal_expenditure_table_repository.update_item(
+            update_expression="SET #data.#date = :updated",
+            expression_attribute_names={
+                "#data": "data",
+                "#date": "date",
+            },
+            expression_attribute_values={":updated": date},
+            partition_key_value=record.id,
+        )
         return self.__create_confirm_response(record)
 
     def __change_classification(
@@ -283,13 +373,22 @@ class HundleLineMessageUsecase:
         )
         if record is None:
             return self.message_pool.get("[not_found_expenditure_error]")
-        record.data.minor_classification = data.updated_item
-        record.data.major_classification = (
-            self.item_classification_table_repository.get_major(
-                record.data.minor_classification
-            )
+        major_classification = self.item_classification_table_repository.get_major(
+            data.updated_item
         )
-        self.temporal_expenditure_table_repository.put_item(record.model_dump())
+        record = self.temporal_expenditure_table_repository.update_item(
+            update_expression="SET #data.#minor_classification = :updated_minor, #data.#major_classification = :updated_major",
+            expression_attribute_names={
+                "#data": "data",
+                "#minor_classification": "minor_classification",
+                "#major_classification": "major_classification",
+            },
+            expression_attribute_values={
+                ":updated_minor": data.updated_item,
+                ":updated_major": major_classification,
+            },
+            partition_key_value=record.id,
+        )
         return self.__create_confirm_response(record)
 
     def __change_for_whom(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
@@ -317,8 +416,15 @@ class HundleLineMessageUsecase:
         )
         if record is None:
             return self.message_pool.get("[not_found_expenditure_error]")
-        record.data.for_whom = data.updated_item
-        self.temporal_expenditure_table_repository.put_item(record.model_dump())
+        record = self.temporal_expenditure_table_repository.update_item(
+            update_expression="SET #data.#for_whom = :updated",
+            expression_attribute_names={
+                "#data": "data",
+                "#for_whom": "for_whom",
+            },
+            expression_attribute_values={":updated": data.updated_item},
+            partition_key_value=record.id,
+        )
         return self.__create_confirm_response(record)
 
     def __change_payer(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
@@ -341,8 +447,15 @@ class HundleLineMessageUsecase:
         )
         if record is None:
             return self.message_pool.get("[not_found_expenditure_error]")
-        record.data.payer = data.updated_item
-        self.temporal_expenditure_table_repository.put_item(record.model_dump())
+        record = self.temporal_expenditure_table_repository.update_item(
+            update_expression="SET #data.#payer = :updated",
+            expression_attribute_names={
+                "#data": "data",
+                "#payer": "payer",
+            },
+            expression_attribute_values={":updated": data.updated_item},
+            partition_key_value=record.id,
+        )
         return self.__create_confirm_response(record)
 
     def __change_payment_method(
@@ -369,8 +482,17 @@ class HundleLineMessageUsecase:
         )
         if record is None:
             return self.message_pool.get("[not_found_expenditure_error]")
-        record.data.payment_method = uc.PaymentMethodEnum.value_of(data.updated_item)
-        self.temporal_expenditure_table_repository.put_item(record.model_dump())
+        record = self.temporal_expenditure_table_repository.update_item(
+            update_expression="SET #data.#payment_method = :updated",
+            expression_attribute_names={
+                "#data": "data",
+                "#payment_method": "payment_method",
+            },
+            expression_attribute_values={
+                ":updated": uc.PaymentMethodEnum.value_of(data.updated_item)
+            },
+            partition_key_value=record.id,
+        )
         return self.__create_confirm_response(record)
 
     def __cancel_expenditure(self, data: uc.RegisterExpenditurePostback) -> list[dict]:

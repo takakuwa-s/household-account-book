@@ -53,20 +53,19 @@ def register_expenditure(input: AccountBookInput):
         input: 支出データ。
     """
     data = []
-    for result in input.receipt_results:
-        for item in result.items:
-            data.append(
-                [
-                    result.date.strftime("%Y/%m/%d"),
-                    item.name,
-                    result.store,
-                    item.price,
-                    input.major_classification,
-                    input.minor_classification,
-                    input.payer,
-                    input.for_whom,
-                    input.payment_method,
-                    item.remarks,
-                ]
-            )
+    for item in input.items:
+        data.append(
+            [
+                input.date.replace("-", "/"),
+                item.name,
+                input.store,
+                item.price,
+                input.major_classification,
+                input.minor_classification,
+                input.payer,
+                input.for_whom,
+                input.payment_method,
+                item.remarks,
+            ]
+        )
     append_data_to_spreadsheet(SPREADSHEET_ID, EXPENDITURE_SHEET_NAME, data)

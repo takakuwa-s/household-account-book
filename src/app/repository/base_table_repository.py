@@ -93,6 +93,37 @@ class BaseTableRepository:
         self.table.put_item(Item=data)
         print(f"Item added successfully, table name = {self.table_model.get_name()}")
 
+    def update_item(
+        self,
+        update_expression: str,
+        expression_attribute_names: dict,
+        expression_attribute_values: dict,
+        partition_key_value: Any,
+        sort_key_value: Any = None,
+    ):
+        """
+        DynamoDBテーブルの項目を更新する
+
+        Args:
+            update_expression (str): 更新式
+            expression_attribute_values (dict): 更新式の変数
+            expression_attribute_names (dict): 更新式の変数名
+            partition_key_value: パーティションキーの値
+            sort_key_value: ソートキーの値
+        Returns:
+            更新後の属性
+        """
+        key = self.__get_key(partition_key_value, sort_key_value)
+        response = self.table.update_item(
+            Key=key,
+            UpdateExpression=update_expression,
+            ExpressionAttributeNames=expression_attribute_names,
+            ExpressionAttributeValues=expression_attribute_values,
+            ReturnValues="ALL_NEW",
+        )
+        print(f"UpdateItem succeeded, table name = {self.table_model.get_name()}")
+        return self.table_model(**response["Attributes"])
+
     def get_all(self):
         """
         テーブル内の全てのアイテムを取得します。

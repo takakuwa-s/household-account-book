@@ -1,4 +1,3 @@
-import datetime
 import os
 from typing import Dict
 from dotenv import load_dotenv
@@ -29,7 +28,7 @@ document_intelligence_client: DocumentIntelligenceClient = DocumentIntelligenceC
 )
 
 
-def analyze_receipt(data: bytes) -> list[ReceiptResult]:
+def analyze_receipt(data: bytes) -> ReceiptResult:
     """
     レシートを読み取り、結果を返します。
     Args:
@@ -37,6 +36,9 @@ def analyze_receipt(data: bytes) -> list[ReceiptResult]:
     Returns:
         レシートの読み取り結果
     """
+    if data is None:
+        return None
+
     poller: AnalyzeDocumentLROPoller[AnalyzeResult] = (
         document_intelligence_client.begin_analyze_document(
             model_id="prebuilt-receipt",
@@ -44,51 +46,40 @@ def analyze_receipt(data: bytes) -> list[ReceiptResult]:
             string_index_type=StringIndexType.UNICODE_CODE_POINT,
         )
     )
-    receipts: AnalyzeResult = poller.result()
+    result: AnalyzeResult = poller.result()
 
-    result = []
-    if receipts.documents:
-        for document in receipts.documents:
-            field: Dict[str, DocumentField] = document.fields
-            if field is None:
-                continue
-            receipt = ReceiptResult()
-            sum = 0
-            for value in field.get("Items", {}).get("valueArray", []):
-                value_object = value.get("valueObject", {})
-                price = (
-                    value_object.get("TotalPrice", {})
-                    .get("valueCurrency", {})
-                    .get("amount")
-                )
-                if price is None:
-                    continue
-                price = int(price)
-                sum += price
-                if price < 0:
-                    receipt.items[-1].price += price
-                    receipt.items[-1].remarks += f"{price}円の割引。"
-                else:
-                    item = ReceiptResult.Item()
-                    item.name = value_object.get("Description", {}).get(
-                        "valueString", ""
-                    )
-                    item.price = price
-                    receipt.items.append(item)
-            # 日付の設定
-            date_str: str = field.get("TransactionDate", {}).get("valueDate", "")
-            try:
-                receipt.date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            except ValueError:
-                print(f"文字列 '{date_str}' は%Y-%m-%dフォーマットに一致しません。")
-            receipt.store = field.get("MerchantName", {}).get("valueString", "不明")
-            receipt.set_total(
-                field.get("Total", {}).get("valueCurrency", {}).get("amount")
+    if result.documents and len(result.documents) > 0 and result.documents[0].fields:
+        field: Dict[str, DocumentField] = result.documents[0].fields
+        receipt = ReceiptResult()
+        sum = 0
+        for value in field.get("Items", {}).get("valueArray", []):
+            value_object = value.get("valueObject", {})
+            price = (
+                value_object.get("TotalPrice", {})
+                .get("valueCurrency", {})
+                .get("amount")
             )
+            if price is None:
+                continue
+            price = int(price)
+            sum += price
+            if price < 0:
+                receipt.items[-1].price += price
+                receipt.items[-1].remarks += f"{price}円の割引。"
+            else:
+                item = ReceiptResult.Item()
+                item.name = value_object.get("Description", {}).get("valueString", "")
+                item.price = price
+                receipt.items.append(item)
+        receipt.number_of_receipts = len(result.documents)
+        receipt.date = field.get("TransactionDate", {}).get("valueDate")
+        receipt.store = field.get("MerchantName", {}).get("valueString", "不明")
+        receipt.set_total(field.get("Total", {}).get("valueCurrency", {}).get("amount"))
 
-            # 消費税の設定
-            receipt.append_tax(sum)
-
-            result.append(receipt)
-    print(f"レシートの読み取りが成功しました。: {result}")
-    return result
+        # 消費税の設定
+        receipt.append_tax(sum)
+    if receipt is None or (receipt.total is None and len(receipt.items) == 0):
+        print("レシートの解析ができませんでした。")
+        return None
+    print(f"レシートの解析に成功しました。: {receipt}")
+    return receipt

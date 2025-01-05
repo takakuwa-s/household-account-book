@@ -47,6 +47,17 @@
       "stickerId": "10551379"
     }
   ],
+  "[not_receipt_error]": [
+    {
+      "type": "text",
+      "text": "すいません、頂いたレシート情報を解析できませんでしたので、処理を終了させて頂きます"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551379"
+    }
+  ],
   "[postback_error]": [
     {
       "type": "text",
@@ -96,75 +107,7 @@
         "footer": {
           "type": "box",
           "layout": "vertical",
-          "contents": [
-            {
-              "type": "button",
-              "style": "primary",
-              "action": {
-                "type": "postback",
-                "label": "登録",
-                "data": "",
-                "displayText": "家計簿に登録します"
-              }
-            },
-            {
-              "type": "button",
-              "action": {
-                "type": "postback",
-                "label": "項目変更",
-                "data": "",
-                "displayText": "大項目・小項目を変更します"
-              }
-            },
-            {
-              "type": "button",
-              "action": {
-                "type": "postback",
-                "label": "誰向け変更",
-                "data": "",
-                "displayText": "誰向けの支払いかを変更します"
-              }
-            },
-            {
-              "type": "button",
-              "action": {
-                "type": "postback",
-                "label": "支払い者変更",
-                "data": "",
-                "displayText": "支払い者を変更します"
-              }
-            },
-            {
-              "type": "button",
-              "action": {
-                "type": "datetimepicker",
-                "label": "日付修正",
-                "data": "",
-                "mode": "date",
-                "initial": "",
-                "max": "",
-                "min": "2020-01-01"
-              }
-            },
-            {
-              "type": "button",
-              "action": {
-                "type": "postback",
-                "label": "支払い方法変更",
-                "data": "",
-                "displayText": "支払い方法を変更します"
-              }
-            },
-            {
-              "type": "button",
-              "action": {
-                "type": "postback",
-                "label": "キャンセル",
-                "data": "",
-                "displayText": "家計簿登録をキャンセルします"
-              }
-            }
-          ]
+          "contents": []
         }
       }
     }

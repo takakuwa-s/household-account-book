@@ -62,10 +62,10 @@ def create_temporal_expenditure_table():
     repository = TemporalExpenditureTableRepository(dynamodb)
     # repository.drop_table()
     # repository.create_table()
-    # repository.delete_item("9b23538f-4924-481c-b8b3-ee0e78436284")
+    repository.delete_item("bcf46ac4-79d7-41cf-84a6-6cbad250b97f")
     print(repository.get_all())
 
 
 if __name__ == "__main__":
-    create_item_classification_table()
-    # create_temporal_expenditure_table()
+    # create_item_classification_table()
+    create_temporal_expenditure_table()

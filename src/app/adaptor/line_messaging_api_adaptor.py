@@ -2,9 +2,7 @@ from dotenv import load_dotenv
 import os
 from linebot.v3.messaging import (
     ApiClient,
-    ApiException,
     Configuration,
-    ErrorResponse,
     MessagingApiBlob,
 )
 
@@ -16,14 +14,18 @@ configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 
 
 def fetch_image(message_id: str) -> bytearray:
+    """
+    LINE Messaging APIからイメージデータを取得します。
+    Args:
+        message_id: メッセージID
+    Returns:
+        bytearray: イメージデータ
+    """
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApiBlob(api_client)
-        try:
-            return line_bot_api.get_message_content(
-                message_id=message_id,
-                _request_timeout=6,
-            )
-        except ApiException as e:
-            print(
-                f"LINE Messagigng APIでエラーが発生しました。status code = {str(e.status)}, body = {str(ErrorResponse.from_json(e.body))}"
-            )
+        binary = line_bot_api.get_message_content(
+            message_id=message_id,
+            _request_timeout=6,
+        )
+        print("lineからのイメージデータ取得に成功しました。")
+        return binary
