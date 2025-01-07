@@ -44,7 +44,7 @@ class AnalyzeReceiptUsecase:
 
             # 4. 解析結果を保存
             if result is None:
-                ttl = calculate_ttl_timestamp(1)
+                ttl = calculate_ttl_timestamp(delete_date=1)
                 self.temporal_expenditure_table_repository.update_item(
                     update_expression="SET #status = :updated_status, #ttl_timestamp = :updated_ttl_timestamp",
                     expression_attribute_names={

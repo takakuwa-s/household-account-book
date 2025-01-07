@@ -8,9 +8,13 @@ import csv
 from src.app.repository.item_classification_table_repository import (
     ItemClassificationTableRepository,
 )
+from src.app.repository.message_session_table_repository import (
+    MessageSessionTableRepository,
+)
 from src.app.repository.temporal_expenditure_table_repository import (
     TemporalExpenditureTableRepository,
 )
+from src.app.repository.user_table_reposioty import UserTableRepository
 
 # DynamoDBリソースの作成
 dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
@@ -66,6 +70,28 @@ def create_temporal_expenditure_table():
     print(repository.get_all())
 
 
+def create_user_table():
+    """
+    Userテーブルの作成を行う。
+    """
+    repository = UserTableRepository(dynamodb)
+    # repository.drop_table()
+    repository.create_table()
+    # print(repository.get_all())
+
+
+def create_message_session_table():
+    """
+    MessageSessionテーブルの作成を行う。
+    """
+    repository = MessageSessionTableRepository(dynamodb)
+    # repository.drop_table()
+    repository.create_table()
+    # print(repository.get_all())
+
+
 if __name__ == "__main__":
     # create_item_classification_table()
-    create_temporal_expenditure_table()
+    # create_temporal_expenditure_table()
+    # create_user_table()
+    create_message_session_table()

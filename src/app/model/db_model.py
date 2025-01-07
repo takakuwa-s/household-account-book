@@ -5,15 +5,16 @@ from pydantic import BaseModel, Field
 from src.app.model import usecase_model as uc
 
 
-def calculate_ttl_timestamp(delete_date: int = 30) -> int:
+def calculate_ttl_timestamp(delete_hour: int = 24, delete_date: int = 30) -> int:
     """
     TTLのタイムスタンプを計算します。
     Args:
         delete_date (int): 何日後に削除するか
+        delete_hour (int): 何時間後に削除するか
     Returns:
         int: TTLのタイムスタンプ
     """
-    return int(time.time()) + 60 * 60 * 24 * delete_date
+    return int(time.time()) + 60 * 60 * delete_hour * delete_date
 
 
 class BaseTable(BaseModel):
@@ -75,6 +76,49 @@ class TemporalExpenditure(BaseTable):
     @staticmethod
     def get_parttion_key() -> tuple[str, str, str]:
         return "id", "HASH", "S"
+
+    @staticmethod
+    def get_sort_key() -> tuple[str, str, str]:
+        return None
+
+
+class User(BaseTable):
+    line_user_id: str = Field(default="")  # パーティションキー
+    line_name: str = Field(default="")
+    name: str = Field(default="")
+
+    @staticmethod
+    def get_name() -> str:
+        return "user"
+
+    @staticmethod
+    def get_parttion_key() -> tuple[str, str, str]:
+        return "line_user_id", "HASH", "S"
+
+    @staticmethod
+    def get_sort_key() -> tuple[str, str, str]:
+        return None
+
+
+class MessageSession(BaseTable):
+    class SessionType(str, Enum):
+        REGISTER_USER = "REGISTER_USER"
+
+    line_user_id: str = Field(default="")  # パーティションキー
+    session_type: SessionType = Field(default=SessionType.REGISTER_USER)
+
+    # およそ14.4分後に削除される
+    ttl_timestamp: int = Field(
+        default_factory=lambda: calculate_ttl_timestamp(delete_hour=1, delete_date=1)
+    )
+
+    @staticmethod
+    def get_name() -> str:
+        return "message_session"
+
+    @staticmethod
+    def get_parttion_key() -> tuple[str, str, str]:
+        return "line_user_id", "HASH", "S"
 
     @staticmethod
     def get_sort_key() -> tuple[str, str, str]:

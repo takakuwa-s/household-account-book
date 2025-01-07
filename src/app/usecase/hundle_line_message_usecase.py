@@ -16,9 +16,13 @@ from src.app.model import (
 from src.app.repository.item_classification_table_repository import (
     ItemClassificationTableRepository,
 )
+from src.app.repository.message_session_table_repository import (
+    MessageSessionTableRepository,
+)
 from src.app.repository.temporal_expenditure_table_repository import (
     TemporalExpenditureTableRepository,
 )
+from src.app.repository.user_table_reposioty import UserTableRepository
 
 # DynamoDBリソースの作成
 dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
@@ -35,6 +39,8 @@ class HundleLineMessageUsecase:
         self.temporal_expenditure_table_repository = TemporalExpenditureTableRepository(
             dynamodb
         )
+        self.user_table_repository = UserTableRepository(dynamodb)
+        self.message_session_table_repository = MessageSessionTableRepository(dynamodb)
         with open(MESSAGE_JSON_PATH, "r") as f:
             self.message_pool = json.load(f)
 
@@ -61,15 +67,38 @@ class HundleLineMessageUsecase:
     def handle_text_message(
         self, message: TextMessageContent, user_id: str
     ) -> list[Message]:
-        return self.message_pool.get(message.text)
+        session: db.MessageSession = self.message_session_table_repository.get_item(
+            user_id
+        )
+        if session is not None:
+            match session.session_type:
+                case db.MessageSession.SessionType.REGISTER_USER:
+                    user: db.User = db.User(line_user_id=user_id, name=message.text)
+                    self.user_table_repository.put_item(user.model_dump())
+                    self.message_session_table_repository.delete_item(user_id)
+                    response = self.message_pool.get("[register_user]")
+                    response[0]["text"] = (
+                        f"「{message.text}」さん、ユーザー登録が完了しました！"
+                    )
+                    return response
+        response: list[dict] = self.message_pool.get(message.text)
+        match message.text:
+            case uc.KeywordsEnum.REGISTER_USER.value:
+                session: db.MessageSession = db.MessageSession(line_user_id=user_id)
+                self.message_session_table_repository.put_item(session.model_dump())
+        return response
 
     @to_message
     def handle_image_message(
         self, message: ImageMessageContent, user_id: str
     ) -> list[Message]:
+        print(user_id)
         if message.image_set is not None and message.image_set.id is not None:
             return self.message_pool["[image_set_error]"]
-        record = db.TemporalExpenditure(line_image_id=message.id)
+        user: db.User = self.user_table_repository.get_item(user_id)
+        payer = "" if user is None else user.name
+        data = uc.AccountBookInput(payer=payer)
+        record = db.TemporalExpenditure(line_image_id=message.id, data=data)
         self.temporal_expenditure_table_repository.put_item(record.model_dump())
         send_message_to_sqs(record.id)
 

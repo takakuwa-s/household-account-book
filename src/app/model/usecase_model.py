@@ -3,6 +3,10 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class KeywordsEnum(str, Enum):
+    REGISTER_USER = "ユーザー登録"
+
+
 class PaymentMethodEnum(str, Enum):
     ADVANCE_PAYMENT = "建て替え"
     FAMILY_CARD = "家族カード"
