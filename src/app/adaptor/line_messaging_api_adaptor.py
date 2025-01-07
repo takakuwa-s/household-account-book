@@ -8,6 +8,9 @@ from linebot.v3.messaging import (
 
 from linebot.v3.messaging.api.messaging_api import MessagingApi
 from linebot.v3.messaging.models.user_profile_response import UserProfileResponse
+from linebot.v3.messaging.models.show_loading_animation_request import (
+    ShowLoadingAnimationRequest,
+)
 
 # .envファイルを読み込む
 load_dotenv()
@@ -50,3 +53,25 @@ def fetch_user_profile(user_id: str) -> UserProfileResponse:
         )
         print(f"lineからのユーザー情報の取得に成功しました。: {profile}")
         return profile
+
+
+def show_loading_animation(user_id: str):
+    """
+    ユーザーとのチャット時に、ローディングを表示します。
+    Args:
+        user_id: ユーザーID
+    Returns:
+        None
+    """
+    request = ShowLoadingAnimationRequest(
+        chat_id=user_id,
+        loading_seconds=10,
+    )
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        response = line_bot_api.show_loading_animation(
+            show_loading_animation_request=request
+        )
+        print(
+            f"ローディング表示を有効にしました。user_id: {user_id}, response: {response}"
+        )

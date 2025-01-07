@@ -124,57 +124,63 @@
   ],
   "[change_for_whom]": [
     {
-      "type": "template",
+      "type": "flex",
       "altText": "誰向けの変更",
-      "template": {
-        "type": "buttons",
-        "title": "Menu",
-        "text": "下記より誰向けの支払いかを選択して下さい",
-        "actions": [
-          {
-            "type": "postback",
-            "label": "くんに変更",
-            "data": "",
-            "displayText": "誰向けの支払いかをくんに変更します"
-          },
-          {
-            "type": "postback",
-            "label": "ちゃんに変更",
-            "data": "",
-            "displayText": "誰向けの支払いかをちゃんに変更します"
-          },
-          {
-            "type": "postback",
-            "label": "共通に変更",
-            "data": "",
-            "displayText": "誰向けの支払いかを共通に変更します"
-          }
-        ]
+      "contents": {
+        "type": "bubble",
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "誰向けの変更",
+              "weight": "bold",
+              "size": "xl"
+            },
+            {
+              "type": "text",
+              "text": "下記より誰向けの支払いかを選択して下さい",
+              "wrap": true
+            }
+          ]
+        },
+        "footer": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": []
+        }
       }
     }
   ],
   "[change_payer]": [
     {
-      "type": "template",
+      "type": "flex",
       "altText": "支払い者の変更",
-      "template": {
-        "type": "buttons",
-        "title": "Menu",
-        "text": "下記より支払い者を選択して下さい",
-        "actions": [
-          {
-            "type": "postback",
-            "label": "くんに変更",
-            "data": "",
-            "displayText": "支払い者をくんに変更します"
-          },
-          {
-            "type": "postback",
-            "label": "ちゃんに変更",
-            "data": "",
-            "displayText": "支払い者をちゃんに変更します"
-          }
-        ]
+      "contents": {
+        "type": "bubble",
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "支払い者の変更",
+              "weight": "bold",
+              "size": "xl"
+            },
+            {
+              "type": "text",
+              "text": "下記より支払い者を選択して下さい",
+              "wrap": true
+            }
+          ]
+        },
+        "footer": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": []
+        }
       }
     }
   ],
@@ -227,16 +233,47 @@
       "text": ""
     }
   ],
+  "[follow]": [
+    {
+      "type": "text",
+      "text": "フォローありがとうございます！"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6325",
+      "stickerId": "10979904"
+    }
+  ],
   "ユーザー登録": [
     {
       "type": "text",
       "text": "ユーザー登録を行います。スプレッドシートに入力するユーザー名を入力してください"
     }
   ],
-  "あ": [
+  "レシート登録": [
     {
       "type": "text",
-      "text": "ああああああ"
+      "text": "レシートを送信して下さい",
+      "quickReply": {
+        "items": [
+          {
+            "type": "action",
+            "imageURL": "",
+            "action": {
+              "type": "cameraRoll",
+              "label": "カメラロールから共有"
+            }
+          },
+          {
+            "type": "action",
+            "imageURL": "",
+            "action": {
+              "type": "camera",
+              "label": "撮影して共有"
+            }
+          }
+        ]
+      }
     }
   ]
 }

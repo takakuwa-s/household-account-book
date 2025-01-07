@@ -13,7 +13,12 @@ from linebot.v3.messaging import (
 )
 from linebot.v3.webhooks import MessageEvent, ImageMessageContent, PostbackEvent
 from linebot.v3.webhooks.models.text_message_content import TextMessageContent
+from linebot.models.events import FollowEvent
+from linebot.models.events import UnfollowEvent
 from src.app.usecase.hundle_line_message_usecase import HundleLineMessageUsecase
+from src.app.adaptor.line_messaging_api_adaptor import (
+    show_loading_animation,
+)
 
 # .envファイルを読み込む
 load_dotenv()
@@ -41,9 +46,22 @@ def reply_message(reply_token: str, messages: list[Message]):
             )
 
 
+@handler.add(FollowEvent)
+def handle_follow_message(event: FollowEvent):
+    show_loading_animation(event.source.user_id)
+    messages = usecase.handle_follow_event(event.source.user_id)
+    reply_message(event.reply_token, messages)
+
+
+@handler.add(UnfollowEvent)
+def handle_unfollow_message(event: UnfollowEvent):
+    pass
+
+
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_text_message(event: MessageEvent):
     if event.source.type == "user":
+        show_loading_animation(event.source.user_id)
         messages = usecase.handle_text_message(event.message, event.source.user_id)
     else:
         messages = usecase.group_message()
@@ -53,6 +71,7 @@ def handle_text_message(event: MessageEvent):
 @handler.add(MessageEvent, message=ImageMessageContent)
 def handle_image_message(event: MessageEvent):
     if event.source.type == "user":
+        show_loading_animation(event.source.user_id)
         messages = usecase.handle_image_message(event.message, event.source.user_id)
     else:
         messages = usecase.group_message()
@@ -62,6 +81,7 @@ def handle_image_message(event: MessageEvent):
 @handler.add(PostbackEvent)
 def handle_postback_event(event: PostbackEvent):
     if event.source.type == "user":
+        show_loading_animation(event.source.user_id)
         messages = usecase.handle_postback_event(event.postback)
     else:
         messages = usecase.group_message()

@@ -6,7 +6,11 @@ from linebot.v3.messaging.models.message import Message
 from linebot.v3.webhooks.models.image_message_content import ImageMessageContent
 from linebot.v3.webhooks.models.text_message_content import TextMessageContent
 from linebot.v3.webhooks.models.postback_content import PostbackContent
+from linebot.v3.messaging.models.user_profile_response import UserProfileResponse
 
+from src.app.adaptor.line_messaging_api_adaptor import (
+    fetch_user_profile,
+)
 from src.app.adaptor.google_sheets_api_adaptor import register_expenditure
 from src.app.adaptor.sqs_adaptor import send_message_to_sqs
 from src.app.model import (
@@ -64,6 +68,15 @@ class HundleLineMessageUsecase:
         return self.message_pool.get("[group_error]")
 
     @to_message
+    def handle_follow_event(self, user_id: str) -> list[Message]:
+        profile: UserProfileResponse = fetch_user_profile(user_id)
+        user: db.User = db.User(line_user_id=user_id, line_name=profile.display_name)
+        self.user_table_repository.put_item(user.model_dump())
+        response = self.message_pool.get("[follow]")
+        response[0]["text"] = f"{user.line_name}さんフォローありがとうございます！"
+        return response
+
+    @to_message
     def handle_text_message(
         self, message: TextMessageContent, user_id: str
     ) -> list[Message]:
@@ -73,12 +86,13 @@ class HundleLineMessageUsecase:
         if session is not None:
             match session.session_type:
                 case db.MessageSession.SessionType.REGISTER_USER:
-                    user: db.User = db.User(line_user_id=user_id, name=message.text)
+                    user: db.User = self.user_table_repository.get_item(user_id)
+                    user.name = message.text
                     self.user_table_repository.put_item(user.model_dump())
                     self.message_session_table_repository.delete_item(user_id)
                     response = self.message_pool.get("[register_user]")
                     response[0]["text"] = (
-                        f"「{message.text}」さん、ユーザー登録が完了しました！"
+                        f"「{message.text}」を{user.line_name}さんのスプレッドシートでの名前として、ユーザー登録が完了しました！"
                     )
                     return response
         response: list[dict] = self.message_pool.get(message.text)
@@ -421,22 +435,45 @@ class HundleLineMessageUsecase:
         return self.__create_confirm_response(record)
 
     def __change_for_whom(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
+        users: list[db.User] = self.user_table_repository.get_all()
+        contents = []
+        for user in users:
+            contents.append(
+                {
+                    "type": "button",
+                    "action": {
+                        "type": "postback",
+                        "label": f"{user.name}に変更",
+                        "data": (
+                            uc.RegisterExpenditurePostback(
+                                id=data.id,
+                                type=uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM,
+                                updated_item=user.name,
+                            ).model_dump_json()
+                        ),
+                        "displayText": f"誰向けの支払いかを{user.name}に変更します",
+                    },
+                }
+            )
+            contents.append(
+                {
+                    "type": "button",
+                    "action": {
+                        "type": "postback",
+                        "label": "共通に変更",
+                        "data": (
+                            uc.RegisterExpenditurePostback(
+                                id=data.id,
+                                type=uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM,
+                                updated_item="共通",
+                            ).model_dump_json()
+                        ),
+                        "displayText": "誰向けの支払いかを共通に変更します",
+                    },
+                }
+            )
         response = self.message_pool.get("[change_for_whom]")
-        response[0]["template"]["actions"][0]["data"] = uc.RegisterExpenditurePostback(
-            id=data.id,
-            type=uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM,
-            updated_item="くん",
-        ).model_dump_json()
-        response[0]["template"]["actions"][1]["data"] = uc.RegisterExpenditurePostback(
-            id=data.id,
-            type=uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM,
-            updated_item="ちゃん",
-        ).model_dump_json()
-        response[0]["template"]["actions"][2]["data"] = uc.RegisterExpenditurePostback(
-            id=data.id,
-            type=uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM,
-            updated_item="共通",
-        ).model_dump_json()
+        response[0]["contents"]["footer"]["contents"] = contents
         return response
 
     def __update_for_whom(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
@@ -457,17 +494,28 @@ class HundleLineMessageUsecase:
         return self.__create_confirm_response(record)
 
     def __change_payer(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
+        users: list[db.User] = self.user_table_repository.get_all()
+        contents = []
+        for user in users:
+            contents.append(
+                {
+                    "type": "button",
+                    "action": {
+                        "type": "postback",
+                        "label": f"{user.name}に変更",
+                        "data": (
+                            uc.RegisterExpenditurePostback(
+                                id=data.id,
+                                type=uc.PostbackEventTypeEnum.UPDATE_PAYER,
+                                updated_item=user.name,
+                            ).model_dump_json()
+                        ),
+                        "displayText": f"支払い者を{user.name}に変更します",
+                    },
+                }
+            )
         response = self.message_pool.get("[change_payer]")
-        response[0]["template"]["actions"][0]["data"] = uc.RegisterExpenditurePostback(
-            id=data.id,
-            type=uc.PostbackEventTypeEnum.UPDATE_PAYER,
-            updated_item="くん",
-        ).model_dump_json()
-        response[0]["template"]["actions"][1]["data"] = uc.RegisterExpenditurePostback(
-            id=data.id,
-            type=uc.PostbackEventTypeEnum.UPDATE_PAYER,
-            updated_item="ちゃん",
-        ).model_dump_json()
+        response[0]["contents"]["footer"]["contents"] = contents
         return response
 
     def __update_payer(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
