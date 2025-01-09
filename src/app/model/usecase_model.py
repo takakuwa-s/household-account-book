@@ -5,6 +5,11 @@ from pydantic import BaseModel, Field
 
 class KeywordsEnum(str, Enum):
     REGISTER_USER = "ユーザー登録"
+    REGISTER_COMMON_FOOD = "食費で使ったレシート登録"
+    REGISTER_COMMON_DAILY_NECESSALITIES = "共有の日用品で使ったレシート登録"
+    REGISTER_MY_DAILY_NECESSALITIES = "私物の日用品で使ったレシート登録"
+    REGISTER_COMMON_ALCOHOL = "家飲みで使ったレシート登録"
+    REGISTER_MY_FASHION = "私物のファッションで使ったレシート登録"
 
 
 class PaymentMethodEnum(str, Enum):

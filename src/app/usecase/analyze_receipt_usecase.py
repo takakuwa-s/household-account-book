@@ -4,8 +4,8 @@ from src.app.adaptor.azure_ducument_intelligence_client import analyze_receipt
 from src.app.adaptor.line_messaging_api_adaptor import fetch_image
 from src.app.model.usecase_model import ReceiptResult
 from src.app.model.db_model import TemporalExpenditure, calculate_ttl_timestamp
-from src.app.repository.temporal_expenditure_table_repository import (
-    TemporalExpenditureTableRepository,
+from src.app.repository.temporal_expenditure_repository import (
+    TemporalExpenditureRepository,
 )
 
 # DynamoDBリソースの作成
@@ -14,7 +14,7 @@ dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
 
 class AnalyzeReceiptUsecase:
     def __init__(self):
-        self.temporal_expenditure_table_repository = TemporalExpenditureTableRepository(
+        self.temporal_expenditure_table_repository = TemporalExpenditureRepository(
             dynamodb
         )
 

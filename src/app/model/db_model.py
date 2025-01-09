@@ -103,9 +103,11 @@ class User(BaseTable):
 class MessageSession(BaseTable):
     class SessionType(str, Enum):
         REGISTER_USER = "REGISTER_USER"
+        REGISTER_EXPENDITURE = "REGISTER_USER"
 
     line_user_id: str = Field(default="")  # パーティションキー
-    session_type: SessionType = Field(default=SessionType.REGISTER_USER)
+    type: SessionType = Field(default=SessionType.REGISTER_USER)
+    memo: str = Field(default="")
 
     # およそ14.4分後に削除される
     ttl_timestamp: int = Field(

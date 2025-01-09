@@ -11,6 +11,11 @@ from linebot.v3.messaging.models.user_profile_response import UserProfileRespons
 from linebot.v3.messaging.models.show_loading_animation_request import (
     ShowLoadingAnimationRequest,
 )
+from linebot.v3.messaging.models.rich_menu_id_response import RichMenuIdResponse
+from linebot.v3.messaging.models.rich_menu_list_response import (
+    RichMenuListResponse,
+)
+from linebot.v3.messaging.models.rich_menu_request import RichMenuRequest
 
 # .envファイルを読み込む
 load_dotenv()
@@ -75,3 +80,104 @@ def show_loading_animation(user_id: str):
         print(
             f"ローディング表示を有効にしました。user_id: {user_id}, response: {response}"
         )
+
+
+def validate_rich_menu_object(data: dict) -> str:
+    """
+    リッチメニューの設定情報が正しいか検証します。
+    Args:
+        data: リッチメニューの設定情報
+    """
+    rich_menu_request = RichMenuRequest.from_dict(data)
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api.validate_rich_menu_object(
+            rich_menu_request=rich_menu_request,
+        )
+        print("リッチメニューは正しく構成されています")
+
+
+def create_rich_menu(data: dict) -> str:
+    """
+    リッチメニューを設定します。
+    Args:
+        data: リッチメニューの設定情報
+    Returns:
+        リッチメニューID: str
+    """
+    rich_menu_request = RichMenuRequest.from_dict(data)
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        response: RichMenuIdResponse = line_bot_api.create_rich_menu(
+            rich_menu_request=rich_menu_request,
+        )
+        print(f"リッチメニューを作成しました。rich_menu_id: {response.rich_menu_id}")
+        return response.rich_menu_id
+
+
+def set_rich_menu_image(rich_menu_id: str, body: bytes):
+    """
+    リッチメニューの画像を設定します。
+    Args:
+        rich_menu_id: リッチメニューID
+        body: リッチメニュー用の画像データ
+    """
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApiBlob(api_client)
+        line_bot_api.set_rich_menu_image(
+            rich_menu_id=rich_menu_id,
+            body=bytearray(body),
+            _headers={"Content-Type": "image/png"},
+        )
+        print(f"リッチメニューの画像を設定しました。rich_menu_id: {rich_menu_id}")
+
+
+def set_default_rich_menu(rich_menu_id: str):
+    """
+    デフォルトのリッチメニューを設定します。
+    Args:
+        rich_menu_id: リッチメニューID
+    """
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api.set_default_rich_menu(
+            rich_menu_id=rich_menu_id,
+        )
+        print(f"デフォルトのリッチメニューを設定しました。rich_menu_id: {rich_menu_id}")
+
+
+def delete_rich_menu(rich_menu_id: str):
+    """
+    リッチメニューを削除します。
+    Args:
+        rich_menu_id: リッチメニューID
+    """
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api.delete_rich_menu(
+            rich_menu_id=rich_menu_id,
+        )
+        print(f"リッチメニューを削除しました。rich_menu_id: {rich_menu_id}")
+
+
+def cancel_default_rich_menu():
+    """
+    デフォルトのリッチメニュー設定を解除します。
+    """
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api.cancel_default_rich_menu()
+        print("デフォルトのリッチメニュー設定を解除しました。")
+
+
+def get_rich_menu_list() -> RichMenuListResponse:
+    """
+    リッチメニューの一覧を取得します。
+    Args:
+        rich_menu_id: リッチメニューID
+    """
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        response: RichMenuListResponse = line_bot_api.get_rich_menu_list()
+        print("リッチメニューの一覧を取得しました。")
+        return response

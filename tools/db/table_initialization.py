@@ -5,16 +5,16 @@
 
 import boto3
 import csv
-from src.app.repository.item_classification_table_repository import (
-    ItemClassificationTableRepository,
+from src.app.repository.item_classification_repository import (
+    ItemClassificationRepository,
 )
-from src.app.repository.message_session_table_repository import (
-    MessageSessionTableRepository,
+from src.app.repository.message_session_repository import (
+    MessageSessionRepository,
 )
-from src.app.repository.temporal_expenditure_table_repository import (
-    TemporalExpenditureTableRepository,
+from src.app.repository.temporal_expenditure_repository import (
+    TemporalExpenditureRepository,
 )
-from src.app.repository.user_table_reposioty import UserTableRepository
+from src.app.repository.user_reposioty import UserRepository
 
 # DynamoDBリソースの作成
 dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
@@ -42,7 +42,7 @@ def create_item_classification_table():
     """
     ItemClassificationテーブルの作成を行う。
     """
-    repository = ItemClassificationTableRepository(dynamodb)
+    repository = ItemClassificationRepository(dynamodb)
     # repository.drop_table()
     # repository.create_table()
 
@@ -63,7 +63,7 @@ def create_temporal_expenditure_table():
     """
     TemporalExpenditureテーブルの作成を行う。
     """
-    repository = TemporalExpenditureTableRepository(dynamodb)
+    repository = TemporalExpenditureRepository(dynamodb)
     # repository.drop_table()
     # repository.create_table()
     repository.delete_item("bcf46ac4-79d7-41cf-84a6-6cbad250b97f")
@@ -74,7 +74,7 @@ def create_user_table():
     """
     Userテーブルの作成を行う。
     """
-    repository = UserTableRepository(dynamodb)
+    repository = UserRepository(dynamodb)
     # repository.drop_table()
     repository.create_table()
     # print(repository.get_all())
@@ -84,10 +84,10 @@ def create_message_session_table():
     """
     MessageSessionテーブルの作成を行う。
     """
-    repository = MessageSessionTableRepository(dynamodb)
+    repository = MessageSessionRepository(dynamodb)
     # repository.drop_table()
-    repository.create_table()
-    # print(repository.get_all())
+    # repository.create_table()
+    print(repository.get_all())
 
 
 if __name__ == "__main__":
