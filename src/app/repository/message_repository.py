@@ -16,7 +16,7 @@ class MessageRepository:
             self.message_pool = json.load(f)
 
     def get_message(self, key: str) -> str:
-        return self.message_pool[key]
+        return self.message_pool.get(key)
 
     def get_error_message(self, e: Exception) -> str:
         messages = self.get_message("[unknown_error]")
@@ -35,7 +35,7 @@ class MessageRepository:
         )
         return messages
 
-    def get_recipt_confirm_message(self, record: db.TemporalExpenditure) -> list[dict]:
+    def get_reciept_confirm_message(self, record: db.TemporalExpenditure) -> list[dict]:
         """
         家計簿登録確認メッセージを作成します。
         Args:

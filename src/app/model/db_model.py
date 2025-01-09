@@ -103,7 +103,7 @@ class User(BaseTable):
 class MessageSession(BaseTable):
     class SessionType(str, Enum):
         REGISTER_USER = "REGISTER_USER"
-        REGISTER_EXPENDITURE = "REGISTER_USER"
+        REGISTER_EXPENDITURE = "REGISTER_EXPENDITURE"
 
     line_user_id: str = Field(default="")  # パーティションキー
     type: SessionType = Field(default=SessionType.REGISTER_USER)

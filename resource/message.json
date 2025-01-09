@@ -250,6 +250,12 @@
       "text": "ユーザー登録を行います。スプレッドシートに入力するユーザー名を入力してください"
     }
   ],
+  "キャンセル": [
+    {
+      "type": "text",
+      "text": "キャンセルしました"
+    }
+  ],
   "[register_receipt]": [
     {
       "type": "text",
@@ -270,6 +276,15 @@
             "action": {
               "type": "camera",
               "label": "撮影して共有"
+            }
+          },
+          {
+            "type": "action",
+            "imageURL": "",
+            "action": {
+              "type": "message",
+              "label": "キャンセル",
+              "text": "キャンセル"
             }
           }
         ]

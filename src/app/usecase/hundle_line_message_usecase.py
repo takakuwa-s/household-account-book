@@ -82,34 +82,19 @@ class HundleLineMessageUsecase:
                     return self.message_repository.get_register_user_message(
                         message.text, user.line_name
                     )
-        match message.text:
-            case uc.KeywordsEnum.REGISTER_USER.value:
-                session: db.MessageSession = db.MessageSession(line_user_id=user_id)
-                self.message_session_repository.put_item(session.model_dump())
-                response: list[dict] = self.message_repository.get_message(message.text)
-            case uc.KeywordsEnum.REGISTER_COMMON_FOOD.value:
-                response: list[dict] = self.__set_default_expenditure_setting(
-                    user_id, "生活費", "食費", True
-                )
-            case uc.KeywordsEnum.REGISTER_COMMON_DAILY_NECESSALITIES.value:
-                response: list[dict] = self.__set_default_expenditure_setting(
-                    user_id, "生活費", "日用品", True
-                )
-            case uc.KeywordsEnum.REGISTER_MY_DAILY_NECESSALITIES.value:
-                response: list[dict] = self.__set_default_expenditure_setting(
-                    user_id, "生活費", "日用品", False
-                )
-            case uc.KeywordsEnum.REGISTER_COMMON_ALCOHOL.value:
-                response: list[dict] = self.__set_default_expenditure_setting(
-                    user_id, "娯楽", "家飲み", True
-                )
-            case uc.KeywordsEnum.REGISTER_MY_FASHION.value:
-                response: list[dict] = self.__set_default_expenditure_setting(
-                    user_id, "生活費", "ファッション", False
-                )
-            case _:
-                response: list[dict] = self.message_repository.get_message(message.text)
-        return response
+        if message.text == uc.KeywordsEnum.REGISTER_USER.value:
+            session: db.MessageSession = db.MessageSession(line_user_id=user_id)
+            self.message_session_repository.put_item(session.model_dump())
+            return self.message_repository.get_message(message.text)
+        elif uc.KeywordsEnum.is_for_register_receipt(message.text):
+            major_classification, minor_classification, is_common_for_whom = (
+                uc.KeywordsEnum.get_setting_from_keyword(message.text)
+            )
+            return self.__set_default_expenditure_setting(
+                user_id, major_classification, minor_classification, is_common_for_whom
+            )
+        else:
+            return self.message_repository.get_message(message.text)
 
     def __set_default_expenditure_setting(
         self,
@@ -145,6 +130,7 @@ class HundleLineMessageUsecase:
             return self.message_repository.get_message("[image_set_error]")
 
         session: db.MessageSession = self.message_session_repository.get_item(user_id)
+        record = None
         if session is not None:
             self.message_session_repository.delete_item(user_id)
             if session.type == db.MessageSession.SessionType.REGISTER_EXPENDITURE:
@@ -159,184 +145,79 @@ class HundleLineMessageUsecase:
             record = db.TemporalExpenditure(line_image_id=message.id, data=data)
         self.temporal_expenditure_repository.put_item(record.model_dump())
         send_message_to_sqs(record.id)
-
-        return self.message_repository.get_recipt_confirm_message(record)
+        return self.message_repository.get_reciept_confirm_message(record)
 
     @to_message
     def handle_postback_event(self, postback: PostbackContent) -> list[Message]:
-        data: dict = json.loads(postback.data)
-        match data["type"]:
-            case uc.PostbackEventTypeEnum.REGISTER_EXPENDITURE:
-                return self.__register_expenditure(
-                    uc.RegisterExpenditurePostback(**data)
+        data_dict: dict = json.loads(postback.data)
+        if uc.PostbackEventTypeEnum.is_for_receipt_registration(data_dict["type"]):
+            data = uc.RegisterExpenditurePostback(**data_dict)
+            record: db.TemporalExpenditure = (
+                self.temporal_expenditure_repository.get_item(data.id)
+            )
+            if record is None:
+                return self.message_repository.get_message(
+                    "[not_found_expenditure_error]"
                 )
-            case uc.PostbackEventTypeEnum.RELOAD_STATUS:
-                return self.__reload_status(uc.RegisterExpenditurePostback(**data))
-            case uc.PostbackEventTypeEnum.CHANGE_CLASSIFICATION:
-                classifications = (
-                    self.item_classification_repository.get_all_major_to_minors_map()
-                )
-                return self.message_repository.get_change_classification_message(
-                    uc.RegisterExpenditurePostback(**data), classifications
-                )
-            case uc.PostbackEventTypeEnum.UPDATE_CLASSIFICATION:
-                return self.__update_classification(
-                    uc.RegisterExpenditurePostback(**data)
-                )
-            case uc.PostbackEventTypeEnum.CHANGE_FOR_WHOM:
-                users: list[db.User] = self.user_repository.get_all()
-                return self.message_repository.get_change_for_whom_message(
-                    uc.RegisterExpenditurePostback(**data), users
-                )
-            case uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM:
-                return self.__update_for_whom(uc.RegisterExpenditurePostback(**data))
-            case uc.PostbackEventTypeEnum.CHANGE_PAYER:
-                users: list[db.User] = self.user_repository.get_all()
-                return self.message_repository.get_change_payer_message(
-                    uc.RegisterExpenditurePostback(**data), users
-                )
-            case uc.PostbackEventTypeEnum.UPDATE_PAYER:
-                return self.__update_payer(uc.RegisterExpenditurePostback(**data))
-            case uc.PostbackEventTypeEnum.UPDATE_DATE:
-                return self.__update_date(
-                    uc.RegisterExpenditurePostback(**data), postback.params["date"]
-                )
-            case uc.PostbackEventTypeEnum.CHANGE_PAYMENT_METHOD:
-                return self.message_repository.get_change_payment_method_message(
-                    uc.RegisterExpenditurePostback(**data)
-                )
-            case uc.PostbackEventTypeEnum.UPDATE_PAYMENT_METHOD:
-                return self.__update_payment_method(
-                    uc.RegisterExpenditurePostback(**data)
-                )
-            case uc.PostbackEventTypeEnum.CANCEL:
-                return self.__cancel_expenditure(uc.RegisterExpenditurePostback(**data))
-            case _:
-                return self.message_repository.get_message("[postback_error]")
-
-    def __register_expenditure(
-        self, data: uc.RegisterExpenditurePostback
-    ) -> list[dict]:
-        record: db.TemporalExpenditure = self.temporal_expenditure_repository.get_item(
-            data.id
-        )
-        if record is None:
-            return self.message_repository.get_message("[not_found_expenditure_error]")
-        register_expenditure(record.data)
-        self.temporal_expenditure_repository.delete_item(data.id)
-        return self.message_repository.get_message("[register]")
-
-    def __reload_status(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
-        record: db.TemporalExpenditure = self.temporal_expenditure_repository.get_item(
-            data.id
-        )
-        if record is None:
-            return self.message_repository.get_message("[not_found_expenditure_error]")
-        return self.message_repository.get_recipt_confirm_message(record)
-
-    def __update_date(
-        self, data: uc.RegisterExpenditurePostback, date: str
-    ) -> list[dict]:
-        record: db.TemporalExpenditure = self.temporal_expenditure_repository.get_item(
-            data.id
-        )
-        if record is None:
-            return self.message_repository.get_message("[not_found_expenditure_error]")
-        record = self.temporal_expenditure_repository.update_item(
-            update_expression="SET #data.#date = :updated",
-            expression_attribute_names={
-                "#data": "data",
-                "#date": "date",
-            },
-            expression_attribute_values={":updated": date},
-            partition_key_value=record.id,
-        )
-        return self.message_repository.get_recipt_confirm_message(record)
-
-    def __update_classification(
-        self, data: uc.RegisterExpenditurePostback
-    ) -> list[dict]:
-        record: db.TemporalExpenditure = self.temporal_expenditure_repository.get_item(
-            data.id
-        )
-        if record is None:
-            return self.message_repository.get_message("[not_found_expenditure_error]")
-        major_classification = self.item_classification_repository.get_major(
-            data.updated_item
-        )
-        record = self.temporal_expenditure_repository.update_item(
-            update_expression="SET #data.#minor_classification = :updated_minor, #data.#major_classification = :updated_major",
-            expression_attribute_names={
-                "#data": "data",
-                "#minor_classification": "minor_classification",
-                "#major_classification": "major_classification",
-            },
-            expression_attribute_values={
-                ":updated_minor": data.updated_item,
-                ":updated_major": major_classification,
-            },
-            partition_key_value=record.id,
-        )
-        return self.message_repository.get_recipt_confirm_message(record)
-
-    def __update_for_whom(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
-        record: db.TemporalExpenditure = self.temporal_expenditure_repository.get_item(
-            data.id
-        )
-        if record is None:
-            return self.message_repository.get_message("[not_found_expenditure_error]")
-        record = self.temporal_expenditure_repository.update_item(
-            update_expression="SET #data.#for_whom = :updated",
-            expression_attribute_names={
-                "#data": "data",
-                "#for_whom": "for_whom",
-            },
-            expression_attribute_values={":updated": data.updated_item},
-            partition_key_value=record.id,
-        )
-        return self.message_repository.get_recipt_confirm_message(record)
-
-    def __update_payer(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
-        record: db.TemporalExpenditure = self.temporal_expenditure_repository.get_item(
-            data.id
-        )
-        if record is None:
-            return self.message_repository.get_message("[not_found_expenditure_error]")
-        record = self.temporal_expenditure_repository.update_item(
-            update_expression="SET #data.#payer = :updated",
-            expression_attribute_names={
-                "#data": "data",
-                "#payer": "payer",
-            },
-            expression_attribute_values={":updated": data.updated_item},
-            partition_key_value=record.id,
-        )
-        return self.message_repository.get_recipt_confirm_message(record)
-
-    def __update_payment_method(
-        self, data: uc.RegisterExpenditurePostback
-    ) -> list[dict]:
-        record: db.TemporalExpenditure = self.temporal_expenditure_repository.get_item(
-            data.id
-        )
-        if record is None:
-            return self.message_repository.get_message("[not_found_expenditure_error]")
-        record = self.temporal_expenditure_repository.update_item(
-            update_expression="SET #data.#payment_method = :updated",
-            expression_attribute_names={
-                "#data": "data",
-                "#payment_method": "payment_method",
-            },
-            expression_attribute_values={
-                ":updated": uc.PaymentMethodEnum.value_of(data.updated_item)
-            },
-            partition_key_value=record.id,
-        )
-        return self.message_repository.get_recipt_confirm_message(record)
-
-    def __cancel_expenditure(self, data: uc.RegisterExpenditurePostback) -> list[dict]:
-        self.temporal_expenditure_repository.delete_item(data.id)
-        return self.message_repository.get_message("[cancel]")
+            match data_dict["type"]:
+                case uc.PostbackEventTypeEnum.REGISTER_EXPENDITURE:
+                    register_expenditure(record.data)
+                    self.temporal_expenditure_repository.delete_item(data.id)
+                    return self.message_repository.get_message("[register]")
+                case uc.PostbackEventTypeEnum.RELOAD_STATUS:
+                    return self.message_repository.get_reciept_confirm_message(record)
+                case uc.PostbackEventTypeEnum.CHANGE_CLASSIFICATION:
+                    classifications = self.item_classification_repository.get_all_major_to_minors_map()
+                    return self.message_repository.get_change_classification_message(
+                        data, classifications
+                    )
+                case uc.PostbackEventTypeEnum.UPDATE_CLASSIFICATION:
+                    major_classification = (
+                        self.item_classification_repository.get_major(data.updated_item)
+                    )
+                    record = self.temporal_expenditure_repository.update_classification(
+                        id=record.id,
+                        minar_classification=data.updated_item,
+                        major_classification=major_classification,
+                    )
+                    return self.message_repository.get_reciept_confirm_message(record)
+                case uc.PostbackEventTypeEnum.CHANGE_FOR_WHOM:
+                    users: list[db.User] = self.user_repository.get_all()
+                    return self.message_repository.get_change_for_whom_message(
+                        data, users
+                    )
+                case uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM:
+                    record = self.temporal_expenditure_repository.update_for_whom(
+                        id=record.id, for_whom=data.updated_item
+                    )
+                    return self.message_repository.get_reciept_confirm_message(record)
+                case uc.PostbackEventTypeEnum.CHANGE_PAYER:
+                    users: list[db.User] = self.user_repository.get_all()
+                    return self.message_repository.get_change_payer_message(data, users)
+                case uc.PostbackEventTypeEnum.UPDATE_PAYER:
+                    record = self.temporal_expenditure_repository.update_payer(
+                        id=record.id, payer=data.updated_item
+                    )
+                    return self.message_repository.get_reciept_confirm_message(record)
+                case uc.PostbackEventTypeEnum.UPDATE_DATE:
+                    record = self.temporal_expenditure_repository.update_date(
+                        record.id, postback.params["date"]
+                    )
+                    return self.message_repository.get_reciept_confirm_message(record)
+                case uc.PostbackEventTypeEnum.CHANGE_PAYMENT_METHOD:
+                    return self.message_repository.get_change_payment_method_message(
+                        data
+                    )
+                case uc.PostbackEventTypeEnum.UPDATE_PAYMENT_METHOD:
+                    record = self.temporal_expenditure_repository.update_payment_method(
+                        id=record.id, payment_method=data.updated_item
+                    )
+                    return self.message_repository.get_reciept_confirm_message(record)
+                case uc.PostbackEventTypeEnum.CANCEL:
+                    self.temporal_expenditure_repository.delete_item(data.id)
+                    return self.message_repository.get_message("[cancel]")
+        else:
+            return self.message_repository.get_message("[postback_error]")
 
     @to_message
     def handle_default_event(self) -> list[Message]:

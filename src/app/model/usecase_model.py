@@ -10,6 +10,47 @@ class KeywordsEnum(str, Enum):
     REGISTER_MY_DAILY_NECESSALITIES = "私物の日用品で使ったレシート登録"
     REGISTER_COMMON_ALCOHOL = "家飲みで使ったレシート登録"
     REGISTER_MY_FASHION = "私物のファッションで使ったレシート登録"
+    CANCEL = "キャンセル"
+
+    @staticmethod
+    def is_for_register_receipt(keyword: str) -> bool:
+        """
+        レシート登録に関連するキーワードかどうかを判定します。
+        Args:
+            keyword: キーワード
+        Returns:
+            当てはまる場合はTrue
+        """
+        return keyword in [
+            KeywordsEnum.REGISTER_COMMON_FOOD.value,
+            KeywordsEnum.REGISTER_COMMON_DAILY_NECESSALITIES.value,
+            KeywordsEnum.REGISTER_MY_DAILY_NECESSALITIES.value,
+            KeywordsEnum.REGISTER_COMMON_ALCOHOL.value,
+            KeywordsEnum.REGISTER_MY_FASHION.value,
+        ]
+
+    @staticmethod
+    def get_setting_from_keyword(keyword: str) -> tuple[str, str, str]:
+        """
+        キーワードに対応する設定を取得します。
+        Args:
+            keyword: キーワード
+        Returns:
+            大項目, 小項目, 共通かどうかの設定
+        """
+        match keyword:
+            case KeywordsEnum.REGISTER_COMMON_FOOD.value:
+                return "生活費", "食費", True
+            case KeywordsEnum.REGISTER_COMMON_DAILY_NECESSALITIES.value:
+                return "生活費", "日用品", True
+            case KeywordsEnum.REGISTER_MY_DAILY_NECESSALITIES.value:
+                return "生活費", "日用品", False
+            case KeywordsEnum.REGISTER_COMMON_ALCOHOL.value:
+                return "娯楽", "家飲み", True
+            case KeywordsEnum.REGISTER_MY_FASHION.value:
+                return "生活費", "ファッション", False
+            case _:
+                return "生活費", "食費", True
 
 
 class PaymentMethodEnum(str, Enum):
@@ -66,7 +107,7 @@ class ReceiptResult(BaseModel):
 class AccountBookInput(ReceiptResult):
     major_classification: str = Field(default="生活費")
     minor_classification: str = Field(default="食費")
-    payer: str = Field(default="くん")
+    payer: str = Field(default="")
     for_whom: str = Field(default="共通")
     payment_method: PaymentMethodEnum = Field(default=PaymentMethodEnum.ADVANCE_PAYMENT)
 
@@ -125,6 +166,30 @@ class PostbackEventTypeEnum(str, Enum):
     CHANGE_PAYMENT_METHOD = "change_payment_method"
     UPDATE_PAYMENT_METHOD = "update_payment_method"
     CANCEL = "cancel"
+
+    @staticmethod
+    def is_for_receipt_registration(type: str) -> bool:
+        """
+        レシート登録に関連するイベントかどうかを判定します。
+        Args:
+            type: イベントの種類
+        Returns:
+            レシート登録に関連するイベントの場合はTrue
+        """
+        return type in [
+            PostbackEventTypeEnum.REGISTER_EXPENDITURE,
+            PostbackEventTypeEnum.RELOAD_STATUS,
+            PostbackEventTypeEnum.CHANGE_CLASSIFICATION,
+            PostbackEventTypeEnum.UPDATE_CLASSIFICATION,
+            PostbackEventTypeEnum.CHANGE_FOR_WHOM,
+            PostbackEventTypeEnum.UPDATE_FOR_WHOM,
+            PostbackEventTypeEnum.CHANGE_PAYER,
+            PostbackEventTypeEnum.UPDATE_PAYER,
+            PostbackEventTypeEnum.UPDATE_DATE,
+            PostbackEventTypeEnum.CHANGE_PAYMENT_METHOD,
+            PostbackEventTypeEnum.UPDATE_PAYMENT_METHOD,
+            PostbackEventTypeEnum.CANCEL,
+        ]
 
 
 class RegisterExpenditurePostback(BaseModel):

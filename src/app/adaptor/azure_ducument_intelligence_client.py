@@ -47,6 +47,7 @@ def analyze_receipt(data: bytes) -> ReceiptResult:
         )
     )
     result: AnalyzeResult = poller.result()
+    receipt = None
 
     if result.documents and len(result.documents) > 0 and result.documents[0].fields:
         field: Dict[str, DocumentField] = result.documents[0].fields
