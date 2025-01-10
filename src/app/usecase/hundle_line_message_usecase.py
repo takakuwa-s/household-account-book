@@ -112,7 +112,7 @@ class HundleLineMessageUsecase:
             major_classification=major_classification,
             minor_classification=minor_classification,
         )
-        record = db.TemporalExpenditure(data=data)
+        record = db.TemporalExpenditure(data=data, line_user_id=user_id)
         self.temporal_expenditure_repository.put_item(record.model_dump())
         session: db.MessageSession = db.MessageSession(
             line_user_id=user_id,
@@ -142,7 +142,9 @@ class HundleLineMessageUsecase:
             user: db.User = self.user_repository.get_item(user_id)
             payer = "" if user is None else user.name
             data = uc.AccountBookInput(payer=payer)
-            record = db.TemporalExpenditure(line_image_id=message.id, data=data)
+            record = db.TemporalExpenditure(
+                line_image_id=message.id, line_user_id=user_id, data=data
+            )
         self.temporal_expenditure_repository.put_item(record.model_dump())
         send_message_to_sqs(record.id)
         return self.message_repository.get_reciept_confirm_message(record)

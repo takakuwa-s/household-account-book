@@ -73,15 +73,26 @@
     {
       "type": "text",
       "text": "下記内容でレシートを家計簿に登録しますか？"
-    },
+    }
+  ],
+  "[reciept_analysis_complete]": [
     {
       "type": "text",
-      "text": ""
-    },
+      "text": "レシート解析が完了しました。\n下記内容でレシートを家計簿に登録しますか？"
+    }
+  ],
+  "[reciept_analysis_failed]": [
     {
       "type": "text",
-      "text": ""
+      "text": "レシート解析が完了しましたが、内容を解析できませんでした"
     },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551379"
+    }
+  ],
+  "[update_expenditure_items_menu]": [
     {
       "type": "flex",
       "altText": "家計簿登録確認",

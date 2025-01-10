@@ -1,11 +1,15 @@
 import traceback
 import boto3
+from linebot.v3.messaging.models.message import Message
 from src.app.adaptor.azure_ducument_intelligence_client import analyze_receipt
-from src.app.adaptor.line_messaging_api_adaptor import fetch_image
+from src.app.adaptor.line_messaging_api_adaptor import fetch_image, push_message
 from src.app.model.usecase_model import ReceiptResult
-from src.app.model.db_model import TemporalExpenditure, calculate_ttl_timestamp
+from src.app.model.db_model import TemporalExpenditure
 from src.app.repository.temporal_expenditure_repository import (
     TemporalExpenditureRepository,
+)
+from src.app.repository.message_repository import (
+    MessageRepository,
 )
 
 # DynamoDBリソースの作成
@@ -17,6 +21,7 @@ class AnalyzeReceiptUsecase:
         self.temporal_expenditure_table_repository = TemporalExpenditureRepository(
             dynamodb
         )
+        self.message_repository = MessageRepository()
 
     def execute(self, id: str) -> bool:
         """
@@ -44,42 +49,26 @@ class AnalyzeReceiptUsecase:
 
             # 4. 解析結果を保存
             if result is None:
-                ttl = calculate_ttl_timestamp(delete_date=1)
-                self.temporal_expenditure_table_repository.update_item(
-                    update_expression="SET #status = :updated_status, #ttl_timestamp = :updated_ttl_timestamp",
-                    expression_attribute_names={
-                        "#status": "status",
-                        "#ttl_timestamp": "ttl_timestamp",
-                    },
-                    expression_attribute_values={
-                        ":updated_status": TemporalExpenditure.Status.INVALID_IMAGE,
-                        ":updated_ttl_timestamp": ttl,
-                    },
-                    partition_key_value=id,
+                record = (
+                    self.temporal_expenditure_table_repository.update_analysis_failure(
+                        id
+                    )
                 )
             else:
-                items = [i.model_dump() for i in result.items]
-                self.temporal_expenditure_table_repository.update_item(
-                    update_expression="SET #status = :updated_status, #data.#total = :updated_total, #data.#date = :updated_date, #data.#store = :updated_store, #data.#number_of_receipts = :updated_number_of_receipts, #data.#items = :updated_items",
-                    expression_attribute_names={
-                        "#status": "status",
-                        "#data": "data",
-                        "#total": "total",
-                        "#date": "date",
-                        "#store": "store",
-                        "#number_of_receipts": "number_of_receipts",
-                        "#items": "items",
-                    },
-                    expression_attribute_values={
-                        ":updated_status": TemporalExpenditure.Status.ANALYZED,
-                        ":updated_total": result.total,
-                        ":updated_date": result.date,
-                        ":updated_store": result.store,
-                        ":updated_number_of_receipts": result.number_of_receipts,
-                        ":updated_items": items,
-                    },
-                    partition_key_value=id,
+                record = (
+                    self.temporal_expenditure_table_repository.update_analysis_success(
+                        id, result
+                    )
                 )
+
+            # 5. 通知メッセージを取得
+            message_dicts: list[dict] = (
+                self.message_repository.get_complete_reciept_analysis_message(record)
+            )
+            message = [Message.from_dict(m) for m in message_dicts]
+
+            # 6. 通知メッセージを送信
+            push_message(record.line_user_id, message)
             print(f"全てのレシート解析処理が完了しました。id = {id}")
         except Exception:
             print(f"レシート解析処理に失敗しました。id = {id}")

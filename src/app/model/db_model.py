@@ -64,6 +64,7 @@ class TemporalExpenditure(BaseTable):
         INVALID_IMAGE = "INVALID_IMAGE"
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))  # パーティションキー
+    line_user_id: str = Field(default="")
     line_image_id: str = Field(default="")
     status: Status = Field(default=Status.ANALYZING)
     data: uc.AccountBookInput = Field(default=uc.AccountBookInput())

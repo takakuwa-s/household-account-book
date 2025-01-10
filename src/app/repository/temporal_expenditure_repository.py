@@ -1,5 +1,5 @@
-from src.app.model.db_model import TemporalExpenditure
-from src.app.model.usecase_model import PaymentMethodEnum
+from src.app.model.db_model import TemporalExpenditure, calculate_ttl_timestamp
+from src.app.model.usecase_model import PaymentMethodEnum, ReceiptResult
 from src.app.repository.base_table_repository import BaseTableRepository
 
 
@@ -109,6 +109,62 @@ class TemporalExpenditureRepository(BaseTableRepository):
             },
             expression_attribute_values={
                 ":updated": PaymentMethodEnum.value_of(payment_method)
+            },
+            partition_key_value=id,
+        )
+
+    def update_analysis_failure(self, id: str) -> TemporalExpenditure:
+        """
+        解析失敗として、レコードを更新します。
+        Args:
+            id (str): 仮支出データのID
+        Returns:
+            更新されたレコード
+        """
+        ttl = calculate_ttl_timestamp(delete_date=1)
+        return self.update_item(
+            update_expression="SET #status = :updated_status, #ttl_timestamp = :updated_ttl_timestamp",
+            expression_attribute_names={
+                "#status": "status",
+                "#ttl_timestamp": "ttl_timestamp",
+            },
+            expression_attribute_values={
+                ":updated_status": TemporalExpenditure.Status.INVALID_IMAGE,
+                ":updated_ttl_timestamp": ttl,
+            },
+            partition_key_value=id,
+        )
+
+    def update_analysis_success(
+        self, id: str, result: ReceiptResult
+    ) -> TemporalExpenditure:
+        """
+        解析成功として、レコードを更新します。
+        Args:
+            id (str): 仮支出データのID
+            result (ReceiptResult): レシート解析結果
+        Returns:
+            更新されたレコード
+        """
+        items = [i.model_dump() for i in result.items]
+        return self.update_item(
+            update_expression="SET #status = :updated_status, #data.#total = :updated_total, #data.#date = :updated_date, #data.#store = :updated_store, #data.#number_of_receipts = :updated_number_of_receipts, #data.#items = :updated_items",
+            expression_attribute_names={
+                "#status": "status",
+                "#data": "data",
+                "#total": "total",
+                "#date": "date",
+                "#store": "store",
+                "#number_of_receipts": "number_of_receipts",
+                "#items": "items",
+            },
+            expression_attribute_values={
+                ":updated_status": TemporalExpenditure.Status.ANALYZED,
+                ":updated_total": result.total,
+                ":updated_date": result.date,
+                ":updated_store": result.store,
+                ":updated_number_of_receipts": result.number_of_receipts,
+                ":updated_items": items,
             },
             partition_key_value=id,
         )

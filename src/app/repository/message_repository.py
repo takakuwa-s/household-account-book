@@ -1,5 +1,6 @@
 import datetime
 import json
+from linebot.v3.messaging.models.text_message import TextMessage
 from src.app.model import (
     db_model as db,
     usecase_model as uc,
@@ -48,12 +49,29 @@ class MessageRepository:
             return self.get_message("[not_receipt_error]")
 
         response = self.get_message("[confirm_expenditure]")
-        response[1]["text"] = record.data.get_common_info()
-        if record.status == db.TemporalExpenditure.Status.ANALYZED:
-            response[2]["text"] = record.data.get_receipt_info()
-        else:
-            response[2]["text"] = "レシート解析中です。しばらくお待ちください。"
+        response.extend(self.__create_update_expenditure_items_menu(record))
+        return response
 
+    def get_complete_reciept_analysis_message(
+        self, record: db.TemporalExpenditure
+    ) -> list[dict]:
+        """
+        レシート解析完了メッセージを作成します。
+        Args:
+            record (db.TemporalExpenditure): 仮の家計簿レコード
+        Returns:
+            list[dict]: レシート解析完了メッセージ
+        """
+
+        if record.status == db.TemporalExpenditure.Status.INVALID_IMAGE:
+            return self.get_message("[reciept_analysis_failed]")
+        response = self.get_message("[reciept_analysis_complete]")
+        response.extend(self.__create_update_expenditure_items_menu(record))
+        return response
+
+    def __create_update_expenditure_items_menu(
+        self, record: db.TemporalExpenditure
+    ) -> list[dict]:
         contents = []
         if record.status == db.TemporalExpenditure.Status.ANALYZING:
             # 更新ボタンの設定
@@ -188,8 +206,18 @@ class MessageRepository:
                 },
             }
         )
-        response[3]["contents"]["footer"]["contents"] = contents
-        return response
+        msg3: list[dict] = self.get_message("[update_expenditure_items_menu]")
+        msg3[0]["contents"]["footer"]["contents"] = contents
+
+        msg1 = TextMessage(text=record.data.get_common_info()).to_dict()
+        if record.status == db.TemporalExpenditure.Status.ANALYZED:
+            msg2 = TextMessage(text=record.data.get_receipt_info()).to_dict()
+        else:
+            msg2 = TextMessage(
+                text="レシート解析中です。しばらくお待ちください。"
+            ).to_dict()
+
+        return [msg1, msg2, msg3[0]]
 
     def get_change_classification_message(
         self,

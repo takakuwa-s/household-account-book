@@ -17,6 +17,9 @@ from linebot.v3.messaging.models.rich_menu_list_response import (
 )
 from linebot.v3.messaging.models.rich_menu_request import RichMenuRequest
 
+from linebot.v3.messaging.models.push_message_request import PushMessageRequest
+from linebot.v3.messaging.models.message import Message
+
 # .envファイルを読み込む
 load_dotenv()
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
@@ -181,3 +184,17 @@ def get_rich_menu_list() -> RichMenuListResponse:
         response: RichMenuListResponse = line_bot_api.get_rich_menu_list()
         print("リッチメニューの一覧を取得しました。")
         return response
+
+
+def push_message(user_id: str, message: list[Message]):
+    """
+    ユーザーにメッセージを送信します。
+    Args:
+        user_id: ユーザーID
+        message: 送信するメッセージ
+    """
+    push_message_request = PushMessageRequest(to=user_id, messages=message)
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api.push_message(push_message_request=push_message_request)
+        print(f"メッセージを送信しました。user_id: {user_id}, message: {message}")
