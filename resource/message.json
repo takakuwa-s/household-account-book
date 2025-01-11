@@ -195,6 +195,12 @@
       }
     }
   ],
+  "[no_user_error]": [
+    {
+      "type": "text",
+      "text": "ユーザー情報が登録されていないため、変更できません"
+    }
+  ],
   "[change_payment_method]": [
     {
       "type": "template",
@@ -223,7 +229,13 @@
   "[register]": [
     {
       "type": "text",
-      "text": "頂いた内容でレシートを家計簿に登録しました"
+      "text": "解析したレシート内容全てを家計簿に登録しました"
+    }
+  ],
+  "[register_only_total]": [
+    {
+      "type": "text",
+      "text": "解析したレシート内容のうち、合計金額のみを家計簿に登録しました"
     }
   ],
   "[not_found_expenditure_error]": [

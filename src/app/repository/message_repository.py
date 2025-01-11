@@ -17,7 +17,10 @@ class MessageRepository:
             self.message_pool = json.load(f)
 
     def get_message(self, key: str) -> str:
-        return self.message_pool.get(key)
+        message = self.message_pool.get(key)
+        if message is None:
+            message = self.message_pool.get("[message_not_found_error]")
+        return message
 
     def get_error_message(self, e: Exception) -> str:
         messages = self.get_message("[unknown_error]")
@@ -93,21 +96,39 @@ class MessageRepository:
                 }
             )
         elif record.status == db.TemporalExpenditure.Status.ANALYZED:
-            # 登録ボタンの設定
-            contents.append(
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "登録",
-                        "data": uc.RegisterExpenditurePostback(
-                            id=record.id
-                        ).model_dump_json(),
-                        "displayText": "家計簿に登録します",
-                    },
-                }
-            )
+            if len(record.data.items) > 0:
+                # 登録ボタンの設定
+                contents.append(
+                    {
+                        "type": "button",
+                        "style": "primary",
+                        "action": {
+                            "type": "postback",
+                            "label": "詳細項目含めて登録",
+                            "data": uc.RegisterExpenditurePostback(
+                                id=record.id
+                            ).model_dump_json(),
+                            "displayText": "家計簿に詳細項目を全て含め、登録します",
+                        },
+                    }
+                )
+            if record.data.total is not None:
+                # 合計金額のみ登録ボタンの設定
+                contents.append(
+                    {
+                        "type": "button",
+                        "style": "secondary",
+                        "action": {
+                            "type": "postback",
+                            "label": "合計金額のみ登録",
+                            "data": uc.RegisterExpenditurePostback(
+                                id=record.id,
+                                type=uc.PostbackEventTypeEnum.REGISTER_ONLY_TOTAL,
+                            ).model_dump_json(),
+                            "displayText": "家計簿に合計金額のみを登録します",
+                        },
+                    }
+                )
 
         # 項目変更ボタンの設定
         contents.append(
@@ -274,6 +295,8 @@ class MessageRepository:
     ) -> list[dict]:
         contents = []
         for user in users:
+            if user.name == "":
+                continue
             contents.append(
                 {
                     "type": "button",
@@ -317,6 +340,8 @@ class MessageRepository:
     ) -> list[dict]:
         contents = []
         for user in users:
+            if user.name == "":
+                continue
             contents.append(
                 {
                     "type": "button",
@@ -334,8 +359,11 @@ class MessageRepository:
                     },
                 }
             )
-        response = self.get_message("[change_payer]")
-        response[0]["contents"]["footer"]["contents"] = contents
+        if len(contents) > 0:
+            response = self.get_message("[change_payer]")
+            response[0]["contents"]["footer"]["contents"] = contents
+        else:
+            response = self.get_message("[no_user_error]")
         return response
 
     def get_change_payment_method_message(

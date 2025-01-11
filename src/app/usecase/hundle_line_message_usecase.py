@@ -10,7 +10,10 @@ from linebot.v3.messaging.models.user_profile_response import UserProfileRespons
 from src.app.adaptor.line_messaging_api_adaptor import (
     fetch_user_profile,
 )
-from src.app.adaptor.google_sheets_api_adaptor import register_expenditure
+from src.app.adaptor.google_sheets_api_adaptor import (
+    register_expenditure,
+    register_only_total,
+)
 from src.app.adaptor.sqs_adaptor import send_message_to_sqs
 from src.app.model import (
     db_model as db,
@@ -45,10 +48,6 @@ class HundleLineMessageUsecase:
             self = args[0]
             try:
                 messages = function(*args, **keywords)
-                if messages is None:
-                    messages = self.message_repository.get_message(
-                        "[message_not_found_error]"
-                    )
             except Exception as e:
                 messages = self.message_repository.get_error_message(e)
                 traceback.print_exc()
@@ -166,6 +165,10 @@ class HundleLineMessageUsecase:
                     register_expenditure(record.data)
                     self.temporal_expenditure_repository.delete_item(data.id)
                     return self.message_repository.get_message("[register]")
+                case uc.PostbackEventTypeEnum.REGISTER_ONLY_TOTAL:
+                    register_only_total(record.data)
+                    self.temporal_expenditure_repository.delete_item(data.id)
+                    return self.message_repository.get_message("[register_only_total]")
                 case uc.PostbackEventTypeEnum.RELOAD_STATUS:
                     return self.message_repository.get_reciept_confirm_message(record)
                 case uc.PostbackEventTypeEnum.CHANGE_CLASSIFICATION:

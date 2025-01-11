@@ -12,12 +12,12 @@
         "x": 0,
         "y": 0,
         "width": 834,
-        "height": 718
+        "height": 359
       },
       "action": {
         "type": "message",
-        "label": "食費(共有)",
-        "text": "食費で使ったレシート登録"
+        "label": "ユーザー登録",
+        "text": "ユーザー登録"
       }
     },
     {
@@ -25,12 +25,12 @@
         "x": 834,
         "y": 0,
         "width": 833,
-        "height": 718
+        "height": 359
       },
       "action": {
         "type": "message",
-        "label": "日用品(共有)",
-        "text": "共有の日用品で使ったレシート登録"
+        "label": "美容費(私用)",
+        "text": "私用の美容費で使ったレシート登録"
       }
     },
     {
@@ -38,12 +38,52 @@
         "x": 1667,
         "y": 0,
         "width": 833,
-        "height": 718
+        "height": 359
       },
       "action": {
         "type": "message",
-        "label": "日用品(私物)",
-        "text": "私物の日用品で使ったレシート登録"
+        "label": "交際費(共用)",
+        "text": "共用の交際費で使ったレシート登録"
+      }
+    },
+    {
+      "bounds": {
+        "x": 0,
+        "y": 359,
+        "width": 834,
+        "height": 359
+      },
+      "action": {
+        "type": "message",
+        "label": "食費(共有)",
+        "text": "共用の食費で使ったレシート登録"
+      }
+    },
+    {
+      "bounds": {
+        "x": 834,
+        "y": 359,
+        "width": 833,
+        "height": 359
+      },
+      "action": {
+
+        "type": "message",
+        "label": "ファッション(私用)",
+        "text": "私用のファッションで使ったレシート登録"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 359,
+        "width": 833,
+        "height": 359
+      },
+      "action": {
+        "type": "message",
+        "label": "外食費(共用)",
+        "text": "共用の外食費で使ったレシート登録"
       }
     },
     {
@@ -51,12 +91,12 @@
         "x": 0,
         "y": 718,
         "width": 834,
-        "height": 717
+        "height": 359
       },
       "action": {
         "type": "message",
-        "label": "家飲み",
-        "text": "家飲みで使ったレシート登録"
+        "label": "日用品(共用)",
+        "text": "共用の日用品で使ったレシート登録"
       }
     },
     {
@@ -64,12 +104,12 @@
         "x": 834,
         "y": 718,
         "width": 833,
-        "height": 717
+        "height": 359
       },
       "action": {
         "type": "message",
-        "label": "ファッション(私物)",
-        "text": "私物のファッションで使ったレシート登録"
+        "label": "日用品(私用)",
+        "text": "私用の日用品で使ったレシート登録"
       }
     },
     {
@@ -77,12 +117,51 @@
         "x": 1667,
         "y": 718,
         "width": 833,
-        "height": 718
+        "height": 359
       },
       "action": {
         "type": "message",
-        "label": "ユーザー登録",
-        "text": "ユーザー登録"
+        "label": "家飲み(共用)",
+        "text": "共用の家飲みで使ったレシート登録"
+      }
+    },
+    {
+      "bounds": {
+        "x": 0,
+        "y": 1077,
+        "width": 834,
+        "height": 358
+      },
+      "action": {
+        "type": "message",
+        "label": "家具・家電(共用)",
+        "text": "共用の家具・家電で使ったレシート登録"
+      }
+    },
+    {
+      "bounds": {
+        "x": 834,
+        "y": 1077,
+        "width": 833,
+        "height": 358
+      },
+      "action": {
+        "type": "message",
+        "label": "家具・家電(私用)",
+        "text": "私用の家具・家電で使ったレシート登録"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 1077,
+        "width": 833,
+        "height": 358
+      },
+      "action": {
+        "type": "message",
+        "label": "おやつ(私用)",
+        "text": "私用のおやつで使ったレシート登録"
       }
     }
   ]

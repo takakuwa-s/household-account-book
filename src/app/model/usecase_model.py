@@ -5,11 +5,17 @@ from pydantic import BaseModel, Field
 
 class KeywordsEnum(str, Enum):
     REGISTER_USER = "ユーザー登録"
-    REGISTER_COMMON_FOOD = "食費で使ったレシート登録"
+    REGISTER_COMMON_FOOD = "共用の食費で使ったレシート登録"
     REGISTER_COMMON_DAILY_NECESSALITIES = "共有の日用品で使ったレシート登録"
-    REGISTER_MY_DAILY_NECESSALITIES = "私物の日用品で使ったレシート登録"
-    REGISTER_COMMON_ALCOHOL = "家飲みで使ったレシート登録"
-    REGISTER_MY_FASHION = "私物のファッションで使ったレシート登録"
+    REGISTER_MY_DAILY_NECESSALITIES = "私用の日用品で使ったレシート登録"
+    REGISTER_COMMON_FURNITURES = "共用の家具・家電で使ったレシート登録"
+    REGISTER_MY_FURNITURES = "私用の家具・家電で使ったレシート登録"
+    REGISTER_COMMON_ALCOHOL = "共用の家飲みで使ったレシート登録"
+    REGISTER_MY_FASHION = "私用のファッションで使ったレシート登録"
+    REGISTER_MY_BEAUTY = "私用の美容費で使ったレシート登録"
+    REGISTER_MY_SNACK = "私用のおやつで使ったレシート登録"
+    REGISTER_COMMON_ENTERTAINMENT = "共用の交際費で使ったレシート登録"
+    REGISTER_COMMON_EATING_OUT = "共用の外食費で使ったレシート登録"
     CANCEL = "キャンセル"
 
     @staticmethod
@@ -25,8 +31,14 @@ class KeywordsEnum(str, Enum):
             KeywordsEnum.REGISTER_COMMON_FOOD.value,
             KeywordsEnum.REGISTER_COMMON_DAILY_NECESSALITIES.value,
             KeywordsEnum.REGISTER_MY_DAILY_NECESSALITIES.value,
+            KeywordsEnum.REGISTER_COMMON_FURNITURES.value,
+            KeywordsEnum.REGISTER_MY_FURNITURES.value,
             KeywordsEnum.REGISTER_COMMON_ALCOHOL.value,
             KeywordsEnum.REGISTER_MY_FASHION.value,
+            KeywordsEnum.REGISTER_MY_BEAUTY.value,
+            KeywordsEnum.REGISTER_MY_SNACK.value,
+            KeywordsEnum.REGISTER_COMMON_ENTERTAINMENT.value,
+            KeywordsEnum.REGISTER_COMMON_EATING_OUT.value,
         ]
 
     @staticmethod
@@ -45,10 +57,22 @@ class KeywordsEnum(str, Enum):
                 return "生活費", "日用品", True
             case KeywordsEnum.REGISTER_MY_DAILY_NECESSALITIES.value:
                 return "生活費", "日用品", False
+            case KeywordsEnum.REGISTER_COMMON_FURNITURES.value:
+                return "生活費", "家具・家電", True
+            case KeywordsEnum.REGISTER_MY_FURNITURES.value:
+                return "生活費", "家具・家電", False
             case KeywordsEnum.REGISTER_COMMON_ALCOHOL.value:
                 return "娯楽", "家飲み", True
             case KeywordsEnum.REGISTER_MY_FASHION.value:
                 return "生活費", "ファッション", False
+            case KeywordsEnum.REGISTER_MY_BEAUTY.value:
+                return "生活費", "美容費", True
+            case KeywordsEnum.REGISTER_MY_SNACK.value:
+                return "娯楽", "おやつ", False
+            case KeywordsEnum.REGISTER_COMMON_ENTERTAINMENT.value:
+                return "娯楽", "交際費", True
+            case KeywordsEnum.REGISTER_COMMON_EATING_OUT.value:
+                return "娯楽", "外食費", True
             case _:
                 return "生活費", "食費", True
 
@@ -144,7 +168,11 @@ class AccountBookInput(ReceiptResult):
         for item in self.items:
             sum += item.price
             result += f"・{item.name}: {item.price}円\n"
-        if self.total is not None and sum != self.total:
+        if self.total is None:
+            result += "\n※ 合計金額は読み取れませんでした\n"
+        elif len(self.items) == 0:
+            result += "\n※ レシートの各種詳細項目は読み取れませんでした\n"
+        elif sum != self.total:
             result += f"\n※ 合計と各項目の和が一致しません。各項目の和: {sum}円\n"
         if self.number_of_receipts > 1:
             result += (
@@ -155,6 +183,7 @@ class AccountBookInput(ReceiptResult):
 
 class PostbackEventTypeEnum(str, Enum):
     REGISTER_EXPENDITURE = "register_expenditure"
+    REGISTER_ONLY_TOTAL = "register_only_total"
     RELOAD_STATUS = "reload_status"
     CHANGE_CLASSIFICATION = "change_classification"
     UPDATE_CLASSIFICATION = "update_classification"
@@ -178,6 +207,7 @@ class PostbackEventTypeEnum(str, Enum):
         """
         return type in [
             PostbackEventTypeEnum.REGISTER_EXPENDITURE,
+            PostbackEventTypeEnum.REGISTER_ONLY_TOTAL,
             PostbackEventTypeEnum.RELOAD_STATUS,
             PostbackEventTypeEnum.CHANGE_CLASSIFICATION,
             PostbackEventTypeEnum.UPDATE_CLASSIFICATION,

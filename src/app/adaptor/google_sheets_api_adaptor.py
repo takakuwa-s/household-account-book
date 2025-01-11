@@ -69,3 +69,26 @@ def register_expenditure(input: AccountBookInput):
             ]
         )
     append_data_to_spreadsheet(SPREADSHEET_ID, EXPENDITURE_SHEET_NAME, data)
+
+
+def register_only_total(input: AccountBookInput):
+    """
+    家計簿のスプレッドシートに支出データを追加します。
+    Args:
+        input: 支出データ。
+    """
+    data = [
+        [
+            input.date.replace("-", "/"),
+            f"{input.minor_classification}等",
+            input.store,
+            input.total,
+            input.major_classification,
+            input.minor_classification,
+            input.payer,
+            input.for_whom,
+            input.payment_method,
+            "LINE経由。レシートの合計のみ登録",
+        ]
+    ]
+    append_data_to_spreadsheet(SPREADSHEET_ID, EXPENDITURE_SHEET_NAME, data)
