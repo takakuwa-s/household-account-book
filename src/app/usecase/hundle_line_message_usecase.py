@@ -84,7 +84,7 @@ class HundleLineMessageUsecase:
         if message.text == uc.KeywordsEnum.REGISTER_USER.value:
             session: db.MessageSession = db.MessageSession(line_user_id=user_id)
             self.message_session_repository.put_item(session.model_dump())
-            return self.message_repository.get_message(message.text)
+            return self.message_repository.get_start_user_registration_message()
         elif message.text == uc.KeywordsEnum.GET_TEMPORALLY_EXPENDITURES.value:
             records: list[db.TemporalExpenditure] = (
                 self.temporal_expenditure_repository.get_all_by_line_user_id(user_id)
@@ -142,21 +142,27 @@ class HundleLineMessageUsecase:
                     self.temporal_expenditure_repository.get_item(session.memo)
                 )
                 record.line_image_id = message.id
+                record.status = db.TemporalExpenditure.Status.ANALYZING
         if record is None:
             user: db.User = self.user_repository.get_item(user_id)
             payer = "" if user is None else user.name
             data = uc.AccountBookInput(payer=payer)
             record = db.TemporalExpenditure(
-                line_image_id=message.id, line_user_id=user_id, data=data
+                line_image_id=message.id, line_user_id=user_id, data=data, status = db.TemporalExpenditure.Status.ANALYZING
             )
         self.temporal_expenditure_repository.put_item(record.model_dump())
         send_message_to_sqs(record.id)
-        return self.message_repository.get_reciept_confirm_message(record)
+        return self.message_repository.get_reciept_analysis_message(record)
 
     @to_message
-    def handle_postback_event(self, postback: PostbackContent) -> list[Message]:
+    def handle_postback_event(
+        self, postback: PostbackContent, user_id: str
+    ) -> list[Message]:
         data_dict: dict = json.loads(postback.data)
-        if uc.PostbackEventTypeEnum.is_for_receipt_registration(data_dict["type"]):
+        if data_dict["type"] == uc.PostbackEventTypeEnum.CANCEL_USER_REGISTRATION:
+            self.message_session_repository.delete_item(user_id)
+            return self.message_repository.get_message("[cancel_user_registration]")
+        elif uc.PostbackEventTypeEnum.is_for_receipt_registration(data_dict["type"]):
             data = uc.RegisterExpenditurePostback(**data_dict)
             record: db.TemporalExpenditure = (
                 self.temporal_expenditure_repository.get_item(data.id)

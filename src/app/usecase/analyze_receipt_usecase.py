@@ -63,7 +63,7 @@ class AnalyzeReceiptUsecase:
 
             # 5. 通知メッセージを取得
             message_dicts: list[dict] = (
-                self.message_repository.get_complete_reciept_analysis_message(record)
+                self.message_repository.get_reciept_analysis_message(record)
             )
             message = [Message.from_dict(m) for m in message_dicts]
 

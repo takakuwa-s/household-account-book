@@ -6,9 +6,9 @@ from src.app.repository.message_repository import MessageRepository
 target = MessageRepository()
 
 
-def test_get_complete_reciept_analysis_message():
+def test_get_reciept_analysis_message():
     record: TemporalExpenditure = TemporalExpenditure()
-    message_dicts: list[dict] = target.get_complete_reciept_analysis_message(record)
+    message_dicts: list[dict] = target.get_reciept_analysis_message(record)
     result = [Message.from_dict(m) for m in message_dicts]
     # print(result)
     assert len(result) > 0

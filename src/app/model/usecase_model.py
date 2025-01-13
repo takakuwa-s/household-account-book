@@ -7,10 +7,9 @@ class KeywordsEnum(str, Enum):
     REGISTER_USER = "ユーザー登録"
     GET_TEMPORALLY_EXPENDITURES = "登録途中のレシート一覧"
     REGISTER_COMMON_FOOD = "共用の食費で使ったレシート登録"
-    REGISTER_COMMON_DAILY_NECESSALITIES = "共有の日用品で使ったレシート登録"
+    REGISTER_COMMON_DAILY_NECESSALITIES = "共用の日用品で使ったレシート登録"
     REGISTER_MY_DAILY_NECESSALITIES = "私用の日用品で使ったレシート登録"
     REGISTER_COMMON_FURNITURES = "共用の家具・家電で使ったレシート登録"
-    REGISTER_MY_FURNITURES = "私用の家具・家電で使ったレシート登録"
     REGISTER_COMMON_ALCOHOL = "共用の家飲みで使ったレシート登録"
     REGISTER_MY_FASHION = "私用のファッションで使ったレシート登録"
     REGISTER_MY_BEAUTY = "私用の美容費で使ったレシート登録"
@@ -33,7 +32,6 @@ class KeywordsEnum(str, Enum):
             KeywordsEnum.REGISTER_COMMON_DAILY_NECESSALITIES.value,
             KeywordsEnum.REGISTER_MY_DAILY_NECESSALITIES.value,
             KeywordsEnum.REGISTER_COMMON_FURNITURES.value,
-            KeywordsEnum.REGISTER_MY_FURNITURES.value,
             KeywordsEnum.REGISTER_COMMON_ALCOHOL.value,
             KeywordsEnum.REGISTER_MY_FASHION.value,
             KeywordsEnum.REGISTER_MY_BEAUTY.value,
@@ -60,8 +58,6 @@ class KeywordsEnum(str, Enum):
                 return "生活費", "日用品", False
             case KeywordsEnum.REGISTER_COMMON_FURNITURES.value:
                 return "生活費", "家具・家電", True
-            case KeywordsEnum.REGISTER_MY_FURNITURES.value:
-                return "生活費", "家具・家電", False
             case KeywordsEnum.REGISTER_COMMON_ALCOHOL.value:
                 return "娯楽", "家飲み", True
             case KeywordsEnum.REGISTER_MY_FASHION.value:
@@ -75,7 +71,7 @@ class KeywordsEnum(str, Enum):
             case KeywordsEnum.REGISTER_COMMON_EATING_OUT.value:
                 return "娯楽", "外食費", True
             case _:
-                return "生活費", "食費", True
+                return "", "", True
 
 
 class PaymentMethodEnum(str, Enum):
@@ -183,6 +179,8 @@ class AccountBookInput(ReceiptResult):
 
 
 class PostbackEventTypeEnum(str, Enum):
+    CANCEL_USER_REGISTRATION = "cancel_user_registration"
+
     REGISTER_EXPENDITURE = "register_expenditure"
     REGISTER_ONLY_TOTAL = "register_only_total"
     DETAIL_EXPENDITURE = "detail_expenditure"
@@ -229,3 +227,9 @@ class RegisterExpenditurePostback(BaseModel):
     )
     id: str = Field(default="")
     updated_item: Optional[str] = Field(default=None)
+
+
+class CancelUserRegistrationPostback(BaseModel):
+    type: PostbackEventTypeEnum = Field(
+        default=PostbackEventTypeEnum.CANCEL_USER_REGISTRATION
+    )

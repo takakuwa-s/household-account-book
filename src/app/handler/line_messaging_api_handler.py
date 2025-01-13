@@ -82,7 +82,7 @@ def handle_image_message(event: MessageEvent):
 def handle_postback_event(event: PostbackEvent):
     if event.source.type == "user":
         show_loading_animation(event.source.user_id)
-        messages = usecase.handle_postback_event(event.postback)
+        messages = usecase.handle_postback_event(event.postback, event.source.user_id)
     else:
         messages = usecase.group_message()
     reply_message(event.reply_token, messages)

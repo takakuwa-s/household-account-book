@@ -73,26 +73,15 @@
     {
       "type": "text",
       "text": "下記内容でレシートを家計簿に登録しますか？"
-    }
-  ],
-  "[reciept_analysis_complete]": [
-    {
-      "type": "text",
-      "text": "レシート解析が完了しました。\n下記内容でレシートを家計簿に登録しますか？"
-    }
-  ],
-  "[reciept_analysis_failed]": [
-    {
-      "type": "text",
-      "text": "レシート解析が完了しましたが、内容を解析できませんでした"
     },
     {
-      "type": "sticker",
-      "packageId": "6136",
-      "stickerId": "10551379"
-    }
-  ],
-  "[update_expenditure_items_menu]": [
+      "type": "text",
+      "text": ""
+    },
+    {
+      "type": "text",
+      "text": ""
+    },
     {
       "type": "flex",
       "altText": "家計簿登録確認",
@@ -121,6 +110,39 @@
           "contents": []
         }
       }
+    }
+  ],
+  "[reciept_analysis_started]": [
+    {
+      "type": "text",
+      "text": "レシート解析が開始しました。"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6325",
+      "stickerId": "10979911"
+    }
+  ],
+  "[reciept_analysis_complete]": [
+    {
+      "type": "text",
+      "text": "レシート解析が完了しました。"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6325",
+      "stickerId": "10979908"
+    }
+  ],
+  "[reciept_analysis_failed]": [
+    {
+      "type": "text",
+      "text": "レシート解析が完了しましたが、内容を解析できませんでした"
+    },
+    {
+      "type": "sticker",
+      "packageId": "6136",
+      "stickerId": "10551379"
     }
   ],
   "[change_classification]": [
@@ -283,10 +305,30 @@
       }
     }
   ],
-  "ユーザー登録": [
+  "[start_user_registration]": [
     {
       "type": "text",
-      "text": "ユーザー登録を行います。スプレッドシートに入力するユーザー名を入力してください"
+      "text": "ユーザー登録を行います。スプレッドシートに入力するユーザー名を入力してください",
+      "quickReply": {
+        "items": [
+          {
+            "type": "action",
+            "imageURL": "",
+            "action": {
+              "type": "postback",
+              "label": "ユーザー登録をキャンセル",
+              "data": "",
+              "displayText": "ユーザー登録をキャンセルします"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "[cancel_user_registration]": [
+    {
+      "type": "text",
+      "text": "ユーザー登録をキャンセルしました"
     }
   ],
   "キャンセル": [

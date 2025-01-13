@@ -32,6 +32,13 @@ class MessageRepository:
         messages[0]["text"] = f"{user_name}さんフォローありがとうございます！"
         return messages
 
+    def get_start_user_registration_message(self) -> str:
+        messages = self.get_message("[start_user_registration]")
+        messages[0]["quickReply"]["items"][0]["action"]["data"] = (
+            uc.CancelUserRegistrationPostback().model_dump_json()
+        )
+        return messages
+
     def get_register_user_message(self, user_name: str, line_name: str) -> str:
         messages = self.get_message("[register_user]")
         messages[0]["text"] = (
@@ -57,6 +64,10 @@ class MessageRepository:
 
             # ステータスごとに処理
             match record.status:
+                case db.TemporalExpenditure.Status.NEW:
+                    table_contents_data = [("ステータス", "レシート受付待")]
+                    # 破棄ボタンの設定
+                    buttons.append(self.__get_register_cancel_button(record.id))
                 case db.TemporalExpenditure.Status.ANALYZED:
                     table_contents_data = [
                         ("ステータス", "解析済"),
@@ -138,6 +149,47 @@ class MessageRepository:
         response[0]["contents"]["contents"] = contents
         return response
 
+    def get_reciept_analysis_message(
+        self, record: db.TemporalExpenditure
+    ) -> list[dict]:
+        """
+        レシート解析完了メッセージを作成します。
+        Args:
+            record (db.TemporalExpenditure): 仮の家計簿レコード
+        Returns:
+            list[dict]: レシート解析完了メッセージ
+        """
+        items = [
+            {
+                "type": "action",
+                "action": {
+                    "type": "message",
+                    "label": "登録途中のレシート一覧",
+                    "text": "登録途中のレシート一覧",
+                },
+            },
+            {
+                "type": "action",
+                "action": self.__get_show_details_button(record.id, False, True),
+            },
+        ]
+        match record.status:
+            case db.TemporalExpenditure.Status.ANALYZING:
+                response = self.get_message("[reciept_analysis_started]")
+            case db.TemporalExpenditure.Status.ANALYZED:
+                response = self.get_message("[reciept_analysis_complete]")
+            case db.TemporalExpenditure.Status.INVALID_IMAGE:
+                response = self.get_message("[reciept_analysis_failed]")
+        if record.status != db.TemporalExpenditure.Status.ANALYZED:
+            items.append(
+                {
+                    "type": "action",
+                    "action": self.__get_register_cancel_button(record.id, True),
+                },
+            )
+        response[-1]["quickReply"] = {"items": items}
+        return response
+
     def get_reciept_confirm_message(self, record: db.TemporalExpenditure) -> list[dict]:
         """
         家計簿登録確認メッセージを作成します。
@@ -150,30 +202,6 @@ class MessageRepository:
         if record.status == db.TemporalExpenditure.Status.INVALID_IMAGE:
             return self.get_message("[not_receipt_error]")
 
-        response = self.__create_update_expenditure_items_menu(record)
-        response.insert(0, self.get_message("[confirm_expenditure]")[0])
-        return response
-
-    def get_complete_reciept_analysis_message(
-        self, record: db.TemporalExpenditure
-    ) -> list[dict]:
-        """
-        レシート解析完了メッセージを作成します。
-        Args:
-            record (db.TemporalExpenditure): 仮の家計簿レコード
-        Returns:
-            list[dict]: レシート解析完了メッセージ
-        """
-
-        if record.status == db.TemporalExpenditure.Status.INVALID_IMAGE:
-            return self.get_message("[reciept_analysis_failed]")
-        response = self.__create_update_expenditure_items_menu(record)
-        response.insert(0, self.get_message("[reciept_analysis_complete]")[0])
-        return response
-
-    def __create_update_expenditure_items_menu(
-        self, record: db.TemporalExpenditure
-    ) -> list[dict]:
         contents = []
         if record.status == db.TemporalExpenditure.Status.ANALYZING:
             # 詳細表示ボタンの設定
@@ -269,20 +297,19 @@ class MessageRepository:
 
         # 破棄ボタンの設定
         contents.append(self.__get_register_cancel_button(record.id))
-        msg3: list[dict] = self.get_message("[update_expenditure_items_menu]")
-        msg3[0]["contents"]["footer"]["contents"] = contents
 
-        msg1 = TextMessage(text=record.data.get_common_info()).to_dict()
+        response = self.get_message("[confirm_expenditure]")
+        response[1]["text"] = record.data.get_common_info()
         if record.status == db.TemporalExpenditure.Status.ANALYZED:
-            msg2 = TextMessage(text=record.data.get_receipt_info()).to_dict()
+            response[2]["text"] = record.data.get_receipt_info()
         else:
-            msg2 = TextMessage(
-                text="レシート解析中です。しばらくお待ちください。"
-            ).to_dict()
+            response[2]["text"] = "レシート解析中です。しばらくお待ちください。"
+        response[3]["contents"]["footer"]["contents"] = contents
+        return response
 
-        return [msg1, msg2, msg3[0]]
-
-    def __get_show_details_button(self, id: str, for_reload: bool) -> dict:
+    def __get_show_details_button(
+        self, id: str, for_reload: bool, only_action=False
+    ) -> dict:
         """
         家計簿詳細表示ボタンを作成します。
         Args:
@@ -290,22 +317,25 @@ class MessageRepository:
         Returns:
             dict: 家計簿詳細表示ボタン
         """
+        action = {
+            "type": "postback",
+            "label": "解析ステータス更新" if for_reload else "詳細表示",
+            "data": (
+                uc.RegisterExpenditurePostback(
+                    id=id,
+                    type=uc.PostbackEventTypeEnum.DETAIL_EXPENDITURE,
+                ).model_dump_json()
+            ),
+            "displayText": "レシート解析ステータスを更新します"
+            if for_reload
+            else "登録レシート情報の詳細を表示します",
+        }
+        if only_action:
+            return action
         return {
             "type": "button",
             "style": "primary" if for_reload else "link",
-            "action": {
-                "type": "postback",
-                "label": "解析ステータス更新" if for_reload else "詳細表示",
-                "data": (
-                    uc.RegisterExpenditurePostback(
-                        id=id,
-                        type=uc.PostbackEventTypeEnum.DETAIL_EXPENDITURE,
-                    ).model_dump_json()
-                ),
-                "displayText": "レシート解析ステータスを更新します"
-                if for_reload
-                else "登録レシート情報の詳細を表示します",
-            },
+            "action": action,
         }
 
     def __get_register_button(self, id: str) -> dict:
@@ -349,7 +379,7 @@ class MessageRepository:
             },
         }
 
-    def __get_register_cancel_button(self, id: str) -> dict:
+    def __get_register_cancel_button(self, id: str, only_action=False) -> dict:
         """
         家計簿登録キャンセルボタンを作成します。
         Args:
@@ -357,19 +387,22 @@ class MessageRepository:
         Returns:
             dict: 家計簿登録キャンセルボタン
         """
+        action = {
+            "type": "postback",
+            "label": "破棄",
+            "data": (
+                uc.RegisterExpenditurePostback(
+                    id=id,
+                    type=uc.PostbackEventTypeEnum.DELETE_UNREGISTEED_EXPENDITURE,
+                ).model_dump_json()
+            ),
+            "displayText": "登録途中のレシートを破棄します",
+        }
+        if only_action:
+            return action
         return {
             "type": "button",
-            "action": {
-                "type": "postback",
-                "label": "破棄",
-                "data": (
-                    uc.RegisterExpenditurePostback(
-                        id=id,
-                        type=uc.PostbackEventTypeEnum.DELETE_UNREGISTEED_EXPENDITURE,
-                    ).model_dump_json()
-                ),
-                "displayText": "家計簿登録を破棄します",
-            },
+            "action": action,
         }
 
     def get_change_classification_message(
@@ -446,23 +479,23 @@ class MessageRepository:
                     },
                 }
             )
-            contents.append(
-                {
-                    "type": "button",
-                    "action": {
-                        "type": "postback",
-                        "label": "共通に変更",
-                        "data": (
-                            uc.RegisterExpenditurePostback(
-                                id=data.id,
-                                type=uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM,
-                                updated_item="共通",
-                            ).model_dump_json()
-                        ),
-                        "displayText": "誰向けの支払いかを共通に変更します",
-                    },
-                }
-            )
+        contents.append(
+            {
+                "type": "button",
+                "action": {
+                    "type": "postback",
+                    "label": "共通に変更",
+                    "data": (
+                        uc.RegisterExpenditurePostback(
+                            id=data.id,
+                            type=uc.PostbackEventTypeEnum.UPDATE_FOR_WHOM,
+                            updated_item="共通",
+                        ).model_dump_json()
+                    ),
+                    "displayText": "誰向けの支払いかを共通に変更します",
+                },
+            }
+        )
         response = self.get_message("[change_for_whom]")
         response[0]["contents"]["footer"]["contents"] = contents
         return response
