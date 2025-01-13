@@ -45,7 +45,7 @@ class AnalyzeReceiptUsecase:
             binary = fetch_image(record.line_image_id)
 
             # 3. レシートを解析
-            result: ReceiptResult = analyze_receipt(binary)
+            result: list[ReceiptResult] = analyze_receipt(binary)
 
             # 4. 解析結果を保存
             if result is None:
@@ -57,7 +57,7 @@ class AnalyzeReceiptUsecase:
             else:
                 record = (
                     self.temporal_expenditure_table_repository.update_analysis_success(
-                        id, result
+                        id, result[0]
                     )
                 )
 

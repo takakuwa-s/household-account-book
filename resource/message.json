@@ -241,13 +241,13 @@
   "[not_found_expenditure_error]": [
     {
       "type": "text",
-      "text": "登録するレシート情報が存在しません"
+      "text": "レシート情報が存在しません"
     }
   ],
-  "[cancel]": [
+  "[delete_unregisterrd_expenditure]": [
     {
       "type": "text",
-      "text": "キャンセルしました"
+      "text": "登録途中のレシート情報を削除しました"
     }
   ],
   "[register_user]": [
@@ -265,6 +265,22 @@
       "type": "sticker",
       "packageId": "6325",
       "stickerId": "10979904"
+    }
+  ],
+  "[no_temporal_expenditure]": [
+    {
+      "type": "text",
+      "text": "現在登録途中のレシートはありません"
+    }
+  ],
+  "[temporal_expenditure_list]": [
+    {
+      "type": "flex",
+      "altText": "登録途中のレシート一覧",
+      "contents": {
+        "type": "carousel",
+        "contents": []
+      }
     }
   ],
   "ユーザー登録": [

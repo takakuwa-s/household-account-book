@@ -28,7 +28,7 @@ document_intelligence_client: DocumentIntelligenceClient = DocumentIntelligenceC
 )
 
 
-def analyze_receipt(data: bytes) -> ReceiptResult:
+def analyze_receipt(data: bytes) -> list[ReceiptResult]:
     """
     レシートを読み取り、結果を返します。
     Args:
@@ -47,40 +47,53 @@ def analyze_receipt(data: bytes) -> ReceiptResult:
         )
     )
     result: AnalyzeResult = poller.result()
-    receipt = None
+    receipt_list: list[ReceiptResult] = []
 
-    if result.documents and len(result.documents) > 0 and result.documents[0].fields:
-        field: Dict[str, DocumentField] = result.documents[0].fields
-        receipt = ReceiptResult()
-        sum = 0
-        for value in field.get("Items", {}).get("valueArray", []):
-            value_object = value.get("valueObject", {})
-            price = (
-                value_object.get("TotalPrice", {})
-                .get("valueCurrency", {})
-                .get("amount")
-            )
-            if price is None:
+    if result.documents:
+        for document in result.documents:
+            field: Dict[str, DocumentField] = document.fields
+            if field is None:
                 continue
-            price = int(price)
-            sum += price
-            if price < 0:
-                receipt.items[-1].price += price
-                receipt.items[-1].remarks += f"{price}円の割引。"
-            else:
-                item = ReceiptResult.Item()
-                item.name = value_object.get("Description", {}).get("valueString", "")
-                item.price = price
-                receipt.items.append(item)
-        receipt.number_of_receipts = len(result.documents)
-        receipt.date = field.get("TransactionDate", {}).get("valueDate")
-        receipt.store = field.get("MerchantName", {}).get("valueString", "不明")
-        receipt.set_total(field.get("Total", {}).get("valueCurrency", {}).get("amount"))
+            receipt = ReceiptResult()
+            sum = 0
+            for value in field.get("Items", {}).get("valueArray", []):
+                value_object = value.get("valueObject", {})
+                price = (
+                    value_object.get("TotalPrice", {})
+                    .get("valueCurrency", {})
+                    .get("amount")
+                )
+                if price is None:
+                    continue
+                price = int(price)
+                sum += price
+                if price < 0:
+                    receipt.items[-1].price += price
+                    receipt.items[-1].remarks += f"{price}円の割引。"
+                else:
+                    item = ReceiptResult.Item()
+                    item.name = value_object.get("Description", {}).get(
+                        "valueString", ""
+                    )
+                    item.price = price
+                    receipt.items.append(item)
+            receipt.number_of_receipts = len(result.documents)
+            receipt.date = field.get("TransactionDate", {}).get("valueDate")
+            receipt.store = field.get("MerchantName", {}).get("valueString", "不明")
+            receipt.set_total(
+                field.get("Total", {}).get("valueCurrency", {}).get("amount")
+            )
 
-        # 消費税の設定
-        receipt.append_tax(sum)
-    if receipt is None or (receipt.total is None and len(receipt.items) == 0):
+            # 消費税の設定
+            receipt.append_tax(sum)
+            if receipt.total is None and len(receipt.items) == 0:
+                continue
+            print(
+                f"{receipt.date}に{receipt.store}で購入した合計{receipt.total}円のレシートに関して、解析に成功しました"
+            )
+            receipt_list.append(receipt)
+    if len(receipt_list) == 0:
         print("レシートの解析ができませんでした。")
         return None
-    print(f"レシートの解析に成功しました。: {receipt}")
-    return receipt
+    print("AIによる画像に写っている全てのレシート解析が完了しました。")
+    return receipt_list

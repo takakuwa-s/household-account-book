@@ -1,3 +1,4 @@
+from boto3.dynamodb.conditions import Attr
 from src.app.model.db_model import TemporalExpenditure, calculate_ttl_timestamp
 from src.app.model.usecase_model import PaymentMethodEnum, ReceiptResult
 from src.app.repository.base_table_repository import BaseTableRepository
@@ -6,6 +7,17 @@ from src.app.repository.base_table_repository import BaseTableRepository
 class TemporalExpenditureRepository(BaseTableRepository):
     def __init__(self, dynamodb):
         super().__init__(dynamodb=dynamodb, table_model=TemporalExpenditure)
+
+    def get_all_by_line_user_id(self, line_user_id: str) -> list[TemporalExpenditure]:
+        """
+        LINEユーザーIDで全ての仮支出データを取得します。
+        Args:
+            line_user_id (str): LINEユーザーID
+        Returns:
+            仮支出データのリスト
+        """
+        filter_expression: str = Attr("line_user_id").eq(line_user_id)
+        return self.scan_items(filter_expression)
 
     def update_date(self, id: str, date: str) -> TemporalExpenditure:
         """

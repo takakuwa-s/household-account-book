@@ -134,6 +134,27 @@ class BaseTableRepository:
         items = response.get("Items")
         return [self.table_model(**item) for item in items]
 
+    def scan_items(self, filter_expression: str):
+        """
+        フィルタ式を使用してテーブル内のアイテムをスキャンします。
+        Args:
+            filter_expression: フィルタ式
+        Returns:
+            スキャン結果
+        """
+        response = self.table.scan(
+            FilterExpression=filter_expression,
+        )
+        items = response.get("Items")
+
+        while "LastEvaluatedKey" in response:
+            response = self.table.scan(
+                FilterExpression=filter_expression,
+                ExclusiveStartKey=response["LastEvaluatedKey"],
+            )
+            items.extend(response["Items"])
+        return [self.table_model(**item) for item in items]
+
     def query_items(self, partition_key_value: Any):
         """
         パーティションキーの値で検索を行います。

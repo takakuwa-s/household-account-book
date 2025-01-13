@@ -85,6 +85,11 @@ class HundleLineMessageUsecase:
             session: db.MessageSession = db.MessageSession(line_user_id=user_id)
             self.message_session_repository.put_item(session.model_dump())
             return self.message_repository.get_message(message.text)
+        elif message.text == uc.KeywordsEnum.GET_TEMPORALLY_EXPENDITURES.value:
+            records: list[db.TemporalExpenditure] = (
+                self.temporal_expenditure_repository.get_all_by_line_user_id(user_id)
+            )
+            return self.message_repository.get_temporal_expenditure_list(records)
         elif uc.KeywordsEnum.is_for_register_receipt(message.text):
             major_classification, minor_classification, is_common_for_whom = (
                 uc.KeywordsEnum.get_setting_from_keyword(message.text)
@@ -169,7 +174,7 @@ class HundleLineMessageUsecase:
                     register_only_total(record.data)
                     self.temporal_expenditure_repository.delete_item(data.id)
                     return self.message_repository.get_message("[register_only_total]")
-                case uc.PostbackEventTypeEnum.RELOAD_STATUS:
+                case uc.PostbackEventTypeEnum.DETAIL_EXPENDITURE:
                     return self.message_repository.get_reciept_confirm_message(record)
                 case uc.PostbackEventTypeEnum.CHANGE_CLASSIFICATION:
                     classifications = self.item_classification_repository.get_all_major_to_minors_map()
@@ -218,9 +223,11 @@ class HundleLineMessageUsecase:
                         id=record.id, payment_method=data.updated_item
                     )
                     return self.message_repository.get_reciept_confirm_message(record)
-                case uc.PostbackEventTypeEnum.CANCEL:
+                case uc.PostbackEventTypeEnum.DELETE_UNREGISTEED_EXPENDITURE:
                     self.temporal_expenditure_repository.delete_item(data.id)
-                    return self.message_repository.get_message("[cancel]")
+                    return self.message_repository.get_message(
+                        "[delete_unregisterrd_expenditure]"
+                    )
         else:
             return self.message_repository.get_message("[postback_error]")
 

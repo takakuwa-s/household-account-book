@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class KeywordsEnum(str, Enum):
     REGISTER_USER = "ユーザー登録"
+    GET_TEMPORALLY_EXPENDITURES = "登録途中のレシート一覧"
     REGISTER_COMMON_FOOD = "共用の食費で使ったレシート登録"
     REGISTER_COMMON_DAILY_NECESSALITIES = "共有の日用品で使ったレシート登録"
     REGISTER_MY_DAILY_NECESSALITIES = "私用の日用品で使ったレシート登録"
@@ -184,7 +185,7 @@ class AccountBookInput(ReceiptResult):
 class PostbackEventTypeEnum(str, Enum):
     REGISTER_EXPENDITURE = "register_expenditure"
     REGISTER_ONLY_TOTAL = "register_only_total"
-    RELOAD_STATUS = "reload_status"
+    DETAIL_EXPENDITURE = "detail_expenditure"
     CHANGE_CLASSIFICATION = "change_classification"
     UPDATE_CLASSIFICATION = "update_classification"
     CHANGE_FOR_WHOM = "change_for_whom"
@@ -194,7 +195,7 @@ class PostbackEventTypeEnum(str, Enum):
     UPDATE_DATE = "update_date"
     CHANGE_PAYMENT_METHOD = "change_payment_method"
     UPDATE_PAYMENT_METHOD = "update_payment_method"
-    CANCEL = "cancel"
+    DELETE_UNREGISTEED_EXPENDITURE = "delete_unregisterrd_expenditure"
 
     @staticmethod
     def is_for_receipt_registration(type: str) -> bool:
@@ -208,7 +209,7 @@ class PostbackEventTypeEnum(str, Enum):
         return type in [
             PostbackEventTypeEnum.REGISTER_EXPENDITURE,
             PostbackEventTypeEnum.REGISTER_ONLY_TOTAL,
-            PostbackEventTypeEnum.RELOAD_STATUS,
+            PostbackEventTypeEnum.DETAIL_EXPENDITURE,
             PostbackEventTypeEnum.CHANGE_CLASSIFICATION,
             PostbackEventTypeEnum.UPDATE_CLASSIFICATION,
             PostbackEventTypeEnum.CHANGE_FOR_WHOM,
@@ -218,7 +219,7 @@ class PostbackEventTypeEnum(str, Enum):
             PostbackEventTypeEnum.UPDATE_DATE,
             PostbackEventTypeEnum.CHANGE_PAYMENT_METHOD,
             PostbackEventTypeEnum.UPDATE_PAYMENT_METHOD,
-            PostbackEventTypeEnum.CANCEL,
+            PostbackEventTypeEnum.DELETE_UNREGISTEED_EXPENDITURE,
         ]
 
 
