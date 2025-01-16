@@ -5,16 +5,17 @@
 
 import boto3
 import csv
-from src.app.repository.item_classification_repository import (
-    ItemClassificationRepository,
+from src.app.repository.item_classifications_repository import (
+    ItemClassificationsRepository,
 )
-from src.app.repository.message_session_repository import (
-    MessageSessionRepository,
+from src.app.repository.message_sessions_repository import (
+    MessageSessionsRepository,
 )
-from src.app.repository.temporal_expenditure_repository import (
-    TemporalExpenditureRepository,
+from src.app.repository.temporal_expenditures_repository import (
+    TemporalExpendituresRepository,
 )
-from src.app.repository.user_reposioty import UserRepository
+from src.app.repository.users_reposioty import UsersRepository
+from src.app.repository.image_sets_repository import ImageSetsRepository
 
 # DynamoDBリソースの作成
 dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
@@ -38,11 +39,11 @@ def read_csv_to_list(filepath: str) -> list[list]:
     return data
 
 
-def create_item_classification_table():
+def create_item_classifications_table():
     """
-    ItemClassificationテーブルの作成を行う。
+    ItemClassificationsテーブルの作成を行う。
     """
-    repository = ItemClassificationRepository(dynamodb)
+    repository = ItemClassificationsRepository(dynamodb)
     # repository.drop_table()
     # repository.create_table()
 
@@ -59,39 +60,50 @@ def create_item_classification_table():
     print(repository.get_all())
 
 
-def create_temporal_expenditure_table():
+def create_temporal_expenditures_table():
     """
-    TemporalExpenditureテーブルの作成を行う。
+    TemporalExpendituresテーブルの作成を行う。
     """
-    repository = TemporalExpenditureRepository(dynamodb)
+    repository = TemporalExpendituresRepository(dynamodb)
     # repository.drop_table()
-    # repository.create_table()
-    repository.delete_item("bcf46ac4-79d7-41cf-84a6-6cbad250b97f")
+    repository.create_table()
+    # repository.delete_item("bcf46ac4-79d7-41cf-84a6-6cbad250b97f")
     print(repository.get_all())
 
 
-def create_user_table():
+def create_users_table():
     """
-    Userテーブルの作成を行う。
+    Usersテーブルの作成を行う。
     """
-    repository = UserRepository(dynamodb)
+    repository = UsersRepository(dynamodb)
     # repository.drop_table()
     repository.create_table()
-    # print(repository.get_all())
+    print(repository.get_all())
 
 
-def create_message_session_table():
+def create_message_sessions_table():
     """
-    MessageSessionテーブルの作成を行う。
+    MessageSessionsテーブルの作成を行う。
     """
-    repository = MessageSessionRepository(dynamodb)
+    repository = MessageSessionsRepository(dynamodb)
     # repository.drop_table()
-    # repository.create_table()
+    repository.create_table()
+    print(repository.get_all())
+
+
+def create_image_sets_table():
+    """
+    ImageSetsRepositoryテーブルの作成を行う。
+    """
+    repository = ImageSetsRepository(dynamodb)
+    # repository.drop_table()
+    repository.create_table()
     print(repository.get_all())
 
 
 if __name__ == "__main__":
-    # create_item_classification_table()
-    # create_temporal_expenditure_table()
-    # create_user_table()
-    create_message_session_table()
+    # create_item_classifications_table()
+    create_temporal_expenditures_table()
+    create_users_table()
+    create_message_sessions_table()
+    create_image_sets_table()

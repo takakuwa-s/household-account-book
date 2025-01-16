@@ -1,6 +1,5 @@
 import datetime
 import json
-from linebot.v3.messaging.models.text_message import TextMessage
 from src.app.model import (
     db_model as db,
     usecase_model as uc,
@@ -9,7 +8,7 @@ from src.app.model import (
 MESSAGE_JSON_PATH = "resource/message.json"
 
 
-class MessageRepository:
+class MessagesRepository:
     message_pool = {}
 
     def __init__(self):
@@ -66,45 +65,55 @@ class MessageRepository:
             match record.status:
                 case db.TemporalExpenditure.Status.NEW:
                     table_contents_data = [("ステータス", "レシート受付待")]
-                    # 破棄ボタンの設定
-                    buttons.append(self.__get_register_cancel_button(record.id))
                 case db.TemporalExpenditure.Status.ANALYZED:
+                    note = record.data.get_note()
+                    if not note:
+                        note = "※ 特になし"
                     table_contents_data = [
                         ("ステータス", "解析済"),
-                        ("日付", record.data.date),
-                        ("店名", record.data.store),
-                        ("合計", f"{record.data.total}円"),
-                        ("大項目", record.data.major_classification),
-                        ("小項目", record.data.minor_classification),
-                        ("支払い者", record.data.payer),
-                        ("誰向け", record.data.for_whom),
+                        ("日付", record.data.get("date", "不明")),
+                        ("店名", record.data.get("store", "不明")),
+                        ("合計", f"{record.data.get("total", "?")}円"),
+                        (
+                            "大項目",
+                            record.data.get("major_classification", "不明"),
+                        ),
+                        (
+                            "小項目",
+                            record.data.get("minor_classification", "不明"),
+                        ),
+                        ("支払い者", record.data.get("payer", "不明")),
+                        ("誰向け", record.data.get("for_whom", "不明")),
                         ("支払い方法", record.data.payment_method.value),
+                        ("備考", note),
                     ]
                     # 登録ボタンの設定
                     buttons.append(self.__get_register_button(record.id))
                     # 合計金額のみ登録ボタンの設定
                     buttons.append(self.__get_register_only_total_button(record.id))
-                    # 破棄ボタンの設定
-                    buttons.append(self.__get_register_cancel_button(record.id))
                     # 詳細表示ボタンの設定
                     buttons.append(self.__get_show_details_button(record.id, False))
                 case db.TemporalExpenditure.Status.ANALYZING:
                     table_contents_data = [
                         ("ステータス", "解析中"),
-                        ("大項目", record.data.major_classification),
-                        ("小項目", record.data.minor_classification),
-                        ("支払い者", record.data.payer),
-                        ("誰向け", record.data.for_whom),
+                        (
+                            "大項目",
+                            record.data.get("major_classification", "不明"),
+                        ),
+                        (
+                            "小項目",
+                            record.data.get("minor_classification", "不明"),
+                        ),
+                        ("支払い者", record.data.get("payer", "不明")),
+                        ("誰向け", record.data.get("for_whom", "不明")),
                         ("支払い方法", record.data.payment_method.value),
                     ]
-                    # 破棄ボタンの設定
-                    buttons.append(self.__get_register_cancel_button(record.id))
                     # 詳細表示ボタンの設定
                     buttons.append(self.__get_show_details_button(record.id, False))
                 case db.TemporalExpenditure.Status.INVALID_IMAGE:
                     table_contents_data = [("ステータス", "不正な画像")]
-                    # 破棄ボタンの設定
-                    buttons.append(self.__get_register_cancel_button(record.id))
+            # 破棄ボタンの設定
+            buttons.append(self.__get_register_cancel_button(record.id))
 
             # ボディ部のテーブル作成
             table_contents = [
@@ -124,7 +133,7 @@ class MessageRepository:
                         "spacing": "md",
                         "contents": [
                             {"type": "text", "text": data[0]},
-                            {"type": "text", "text": data[1]},
+                            {"type": "text", "text": data[1], "wrap": True},
                         ],
                     }
                 )
@@ -150,12 +159,17 @@ class MessageRepository:
         return response
 
     def get_reciept_analysis_message(
-        self, record: db.TemporalExpenditure
+        self,
+        temporal_expenditure_id: str,
+        status: db.TemporalExpenditure.Status,
+        num_receipts: int = 0,
     ) -> list[dict]:
         """
         レシート解析完了メッセージを作成します。
         Args:
-            record (db.TemporalExpenditure): 仮の家計簿レコード
+            temporal_expenditure_id (str): 仮の家計簿レコードのID
+            status (db.TemporalExpenditure.Status): 仮の家計簿レコードのステータス
+            num_receipts (int): 解析したレシートの数
         Returns:
             list[dict]: レシート解析完了メッセージ
         """
@@ -170,21 +184,30 @@ class MessageRepository:
             },
             {
                 "type": "action",
-                "action": self.__get_show_details_button(record.id, False, True),
+                "action": self.__get_show_details_button(
+                    temporal_expenditure_id, False, True
+                ),
             },
         ]
-        match record.status:
+        match status:
             case db.TemporalExpenditure.Status.ANALYZING:
                 response = self.get_message("[reciept_analysis_started]")
             case db.TemporalExpenditure.Status.ANALYZED:
                 response = self.get_message("[reciept_analysis_complete]")
+                if num_receipts > 1:
+                    response[0]["text"] = (
+                        response[0]["text"]
+                        + f"\n\n ※ 画像の中には{num_receipts}枚のレシートが含まれており、それらも登録途中のレシートとして保存しているます。「登録途中のレシート一覧」をタップして確認してみて下さい。"
+                    )
             case db.TemporalExpenditure.Status.INVALID_IMAGE:
                 response = self.get_message("[reciept_analysis_failed]")
-        if record.status != db.TemporalExpenditure.Status.ANALYZED:
+        if status != db.TemporalExpenditure.Status.ANALYZED:
             items.append(
                 {
                     "type": "action",
-                    "action": self.__get_register_cancel_button(record.id, True),
+                    "action": self.__get_register_cancel_button(
+                        temporal_expenditure_id, True
+                    ),
                 },
             )
         response[-1]["quickReply"] = {"items": items}

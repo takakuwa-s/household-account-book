@@ -31,6 +31,8 @@ usecase = HundleLineMessageUsecase()
 
 
 def reply_message(reply_token: str, messages: list[Message]):
+    if not messages:
+        return
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         try:

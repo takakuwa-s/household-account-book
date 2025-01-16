@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from src.app.model.common_model import CommonModel
 
 
 class KeywordsEnum(str, Enum):
@@ -87,8 +89,8 @@ class PaymentMethodEnum(str, Enum):
             raise ValueError(f"'{key_name}' enum not found")
 
 
-class ReceiptResult(BaseModel):
-    class Item(BaseModel):
+class ReceiptResult(CommonModel):
+    class Item(CommonModel):
         price: int = Field(default=0)
         name: str = Field(default="")
         remarks: str = Field(default="LINE経由。")
@@ -97,7 +99,6 @@ class ReceiptResult(BaseModel):
     total: Optional[int] = Field(default=None)
     date: str = Field(default="")
     store: str = Field(default="")
-    number_of_receipts: int = Field(default=0)
 
     def set_total(self, total: Optional[float]):
         """
@@ -124,6 +125,18 @@ class ReceiptResult(BaseModel):
             item.remarks += f"合計{self.total}円"
             self.items.append(item)
 
+    def get_note(self) -> str:
+        sum = 0
+        for item in self.items:
+            sum += item.price
+        if self.total is None:
+            return "※ 合計金額は読み取れませんでした"
+        elif len(self.items) == 0:
+            return "※ レシートの各種詳細項目は読み取れませんでした"
+        elif sum != self.total:
+            return f"※ 合計と各項目の和が一致しません。各項目の和: {sum}円"
+        return ""
+
 
 class AccountBookInput(ReceiptResult):
     major_classification: str = Field(default="生活費")
@@ -131,6 +144,27 @@ class AccountBookInput(ReceiptResult):
     payer: str = Field(default="")
     for_whom: str = Field(default="共通")
     payment_method: PaymentMethodEnum = Field(default=PaymentMethodEnum.ADVANCE_PAYMENT)
+
+    @staticmethod
+    def from_another(another: "AccountBookInput") -> "AccountBookInput":
+        """
+        他の家計簿登録情報をコピーします。
+        Args:
+            another: コピー元の家計簿登録情報
+        Returns:
+            コピー後の家計簿登録情報
+        """
+        return AccountBookInput(
+            items=another.items,
+            total=another.total,
+            date=another.date,
+            store=another.store,
+            major_classification=another.major_classification,
+            minor_classification=another.minor_classification,
+            payer=another.payer,
+            for_whom=another.for_whom,
+            payment_method=another.payment_method,
+        )
 
     def get_common_info(self) -> str:
         """
@@ -165,16 +199,9 @@ class AccountBookInput(ReceiptResult):
         for item in self.items:
             sum += item.price
             result += f"・{item.name}: {item.price}円\n"
-        if self.total is None:
-            result += "\n※ 合計金額は読み取れませんでした\n"
-        elif len(self.items) == 0:
-            result += "\n※ レシートの各種詳細項目は読み取れませんでした\n"
-        elif sum != self.total:
-            result += f"\n※ 合計と各項目の和が一致しません。各項目の和: {sum}円\n"
-        if self.number_of_receipts > 1:
-            result += (
-                "\n※ 複数のレシートが画像に見られましたが、1枚のみ解析しています。\n"
-            )
+        note = self.get_note()
+        if note:
+            result += "\n" + note
         return result
 
 
@@ -221,7 +248,7 @@ class PostbackEventTypeEnum(str, Enum):
         ]
 
 
-class RegisterExpenditurePostback(BaseModel):
+class RegisterExpenditurePostback(CommonModel):
     type: PostbackEventTypeEnum = Field(
         default=PostbackEventTypeEnum.REGISTER_EXPENDITURE
     )
@@ -229,7 +256,7 @@ class RegisterExpenditurePostback(BaseModel):
     updated_item: Optional[str] = Field(default=None)
 
 
-class CancelUserRegistrationPostback(BaseModel):
+class CancelUserRegistrationPostback(CommonModel):
     type: PostbackEventTypeEnum = Field(
         default=PostbackEventTypeEnum.CANCEL_USER_REGISTRATION
     )

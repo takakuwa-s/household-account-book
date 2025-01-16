@@ -16,12 +16,13 @@ usecase = AnalyzeReceiptUsecase()
 def lambda_handler(event, context):
     print(f"sqsからデータを受信しました。event = {event}")
 
-    receipt_handle = event["Records"][0]["receiptHandle"]
-    body = event["Records"][0]["body"]
-    completed = usecase.execute(body)
+    for record in event["Records"]:
+        receipt_handle = record["receiptHandle"]
+        body = record["body"]
+        completed = usecase.execute(body)
 
-    # メッセージを削除
-    if completed:
-        sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt_handle)
+        # メッセージを削除
+        if completed:
+            sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt_handle)
 
     return {"statusCode": 200, "body": "Message processed successfully"}

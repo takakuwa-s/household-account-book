@@ -4,7 +4,7 @@ from src.app.model.usecase_model import PaymentMethodEnum, ReceiptResult
 from src.app.repository.base_table_repository import BaseTableRepository
 
 
-class TemporalExpenditureRepository(BaseTableRepository):
+class TemporalExpendituresRepository(BaseTableRepository):
     def __init__(self, dynamodb):
         super().__init__(dynamodb=dynamodb, table_model=TemporalExpenditure)
 
@@ -16,6 +16,9 @@ class TemporalExpenditureRepository(BaseTableRepository):
         Returns:
             仮支出データのリスト
         """
+        # filter_expression: str = Attr("line_user_id").eq(line_user_id) & ~Attr(
+        #     "status"
+        # ).eq(TemporalExpenditure.Status.NEW)
         filter_expression: str = Attr("line_user_id").eq(line_user_id)
         return self.scan_items(filter_expression)
 
@@ -160,14 +163,13 @@ class TemporalExpenditureRepository(BaseTableRepository):
         """
         items = [i.model_dump() for i in result.items]
         return self.update_item(
-            update_expression="SET #status = :updated_status, #data.#total = :updated_total, #data.#date = :updated_date, #data.#store = :updated_store, #data.#number_of_receipts = :updated_number_of_receipts, #data.#items = :updated_items",
+            update_expression="SET #status = :updated_status, #data.#total = :updated_total, #data.#date = :updated_date, #data.#store = :updated_store, #data.#items = :updated_items",
             expression_attribute_names={
                 "#status": "status",
                 "#data": "data",
                 "#total": "total",
                 "#date": "date",
                 "#store": "store",
-                "#number_of_receipts": "number_of_receipts",
                 "#items": "items",
             },
             expression_attribute_values={
@@ -175,7 +177,6 @@ class TemporalExpenditureRepository(BaseTableRepository):
                 ":updated_total": result.total,
                 ":updated_date": result.date,
                 ":updated_store": result.store,
-                ":updated_number_of_receipts": result.number_of_receipts,
                 ":updated_items": items,
             },
             partition_key_value=id,

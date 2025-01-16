@@ -36,17 +36,6 @@
       "stickerId": "10551379"
     }
   ],
-  "[image_set_error]": [
-    {
-      "type": "text",
-      "text": "複数の写真を一度に送らないで下さい。。。処理できません"
-    },
-    {
-      "type": "sticker",
-      "packageId": "6136",
-      "stickerId": "10551379"
-    }
-  ],
   "[not_receipt_error]": [
     {
       "type": "text",
@@ -137,7 +126,7 @@
   "[reciept_analysis_failed]": [
     {
       "type": "text",
-      "text": "レシート解析が完了しましたが、内容を解析できませんでした"
+      "text": "レシート解析が完了しましたが、一枚以上のレシートに関して、内容を解析できませんでした"
     },
     {
       "type": "sticker",

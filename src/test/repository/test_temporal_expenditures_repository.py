@@ -1,12 +1,12 @@
 import boto3
 from src.app.model.db_model import TemporalExpenditure
-from src.app.repository.temporal_expenditure_repository import (
-    TemporalExpenditureRepository,
+from src.app.repository.temporal_expenditures_repository import (
+    TemporalExpendituresRepository,
 )
 
 # DynamoDBリソースの作成
 dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
-target = TemporalExpenditureRepository(dynamodb)
+target = TemporalExpendituresRepository(dynamodb)
 
 
 def test_get_all_by_line_user_id():

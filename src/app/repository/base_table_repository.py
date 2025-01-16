@@ -82,7 +82,9 @@ class BaseTableRepository:
         with self.table.batch_writer() as batch:
             for item in items:
                 batch.put_item(Item=item)
-        print(f"{len(items)} items written to table {self.table_model.get_name()}")
+        print(
+            f"{len(items)} items written to table {self.table_model.get_name()}, size = {len(items)}"
+        )
 
     def put_item(self, data):
         """
@@ -91,7 +93,9 @@ class BaseTableRepository:
             data: 追加するデータ
         """
         self.table.put_item(Item=data)
-        print(f"Item added successfully, table name = {self.table_model.get_name()}")
+        print(
+            f"Item added successfully, table name = {self.table_model.get_name()}, data = {data}"
+        )
 
     def update_item(
         self,
@@ -209,6 +213,7 @@ class BaseTableRepository:
                 f"items not found. partition key value = {partition_key_value}, sort key value = {sort_key_value}, table name = {self.table_model.get_name()}"
             )
             return None
+        print(f"Item found, table name = {self.table_model.get_name()}, item = {item}")
         return self.table_model(**item)
 
     def delete_item(self, partition_key_value: Any, sort_key_value: Any = None):

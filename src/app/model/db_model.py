@@ -1,8 +1,10 @@
 from enum import Enum
 import time
+from typing import Optional
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import Field
 from src.app.model import usecase_model as uc
+from src.app.model.common_model import CommonModel
 
 
 def calculate_ttl_timestamp(delete_hour: int = 24, delete_date: int = 30) -> int:
@@ -17,7 +19,7 @@ def calculate_ttl_timestamp(delete_hour: int = 24, delete_date: int = 30) -> int
     return int(time.time()) + 60 * 60 * delete_hour * delete_date
 
 
-class BaseTable(BaseModel):
+class BaseTable(CommonModel):
     @staticmethod
     def get_name() -> str:
         raise NotImplementedError
@@ -69,11 +71,12 @@ class TemporalExpenditure(BaseTable):
     line_image_id: str = Field(default="")
     status: Status = Field(default=Status.NEW)
     data: uc.AccountBookInput = Field(default=uc.AccountBookInput())
+    image_set_id: Optional[str] = Field(default=None)
     ttl_timestamp: int = Field(default_factory=calculate_ttl_timestamp)
 
     @staticmethod
     def get_name() -> str:
-        return "temporal_expenditure"
+        return "temporal_expenditures"
 
     @staticmethod
     def get_parttion_key() -> tuple[str, str, str]:
@@ -83,6 +86,23 @@ class TemporalExpenditure(BaseTable):
     def get_sort_key() -> tuple[str, str, str]:
         return None
 
+    @staticmethod
+    def from_another(another: "TemporalExpenditure") -> "TemporalExpenditure":
+        """
+        他の仮支出データをコピーします。
+        Args:
+            another: コピー元の仮支出データ
+        Returns:
+            コピー後の仮支出データ
+        """
+        return TemporalExpenditure(
+            line_user_id=another.line_user_id,
+            line_image_id=another.line_image_id,
+            status=TemporalExpenditure.Status(another.status),
+            data=uc.AccountBookInput.from_another(another.data),
+            ttl_timestamp=another.ttl_timestamp,
+        )
+
 
 class User(BaseTable):
     line_user_id: str = Field(default="")  # パーティションキー
@@ -91,7 +111,7 @@ class User(BaseTable):
 
     @staticmethod
     def get_name() -> str:
-        return "user"
+        return "users"
 
     @staticmethod
     def get_parttion_key() -> tuple[str, str, str]:
@@ -109,7 +129,7 @@ class MessageSession(BaseTable):
 
     line_user_id: str = Field(default="")  # パーティションキー
     type: SessionType = Field(default=SessionType.REGISTER_USER)
-    memo: str = Field(default="")
+    temporal_expenditure_id: Optional[str] = Field(default=None)
 
     # およそ14.4分後に削除される
     ttl_timestamp: int = Field(
@@ -118,7 +138,7 @@ class MessageSession(BaseTable):
 
     @staticmethod
     def get_name() -> str:
-        return "message_session"
+        return "message_sessions"
 
     @staticmethod
     def get_parttion_key() -> tuple[str, str, str]:
@@ -127,3 +147,49 @@ class MessageSession(BaseTable):
     @staticmethod
     def get_sort_key() -> tuple[str, str, str]:
         return None
+
+
+class ImageSet(BaseTable):
+    class ImageMetaData(CommonModel):
+        line_image_id: str = Field(default="")
+        status: TemporalExpenditure.Status = Field(
+            default=TemporalExpenditure.Status.ANALYZING
+        )
+
+    image_set_id: str = Field(default="")  # パーティションキー
+    total: int = Field(default="")
+    image_meta_data: list[ImageMetaData] = Field(default=[])
+
+    # およそ14.4分後に削除される
+    ttl_timestamp: int = Field(
+        default_factory=lambda: calculate_ttl_timestamp(delete_hour=1, delete_date=1)
+    )
+
+    @staticmethod
+    def get_name() -> str:
+        return "image_sets"
+
+    @staticmethod
+    def get_parttion_key() -> tuple[str, str, str]:
+        return "image_set_id", "HASH", "S"
+
+    @staticmethod
+    def get_sort_key() -> tuple[str, str, str]:
+        return None
+
+    def get_overall_status(self) -> TemporalExpenditure.Status:
+        """
+        全画像をまとめた解析ステータスを取得します。
+        Returns:
+            TemporalExpenditure.Status: 全体の解析ステータス
+        """
+        invalid_image_exists = False
+        for image_meta_data in self.image_meta_data:
+            if image_meta_data.status == TemporalExpenditure.Status.ANALYZING:
+                return TemporalExpenditure.Status.ANALYZING
+            elif image_meta_data.status == TemporalExpenditure.Status.INVALID_IMAGE:
+                invalid_image_exists = True
+        if invalid_image_exists:
+            return TemporalExpenditure.Status.INVALID_IMAGE
+        else:
+            return TemporalExpenditure.Status.ANALYZED

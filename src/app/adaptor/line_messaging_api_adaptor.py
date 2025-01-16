@@ -196,5 +196,11 @@ def push_message(user_id: str, message: list[Message]):
     push_message_request = PushMessageRequest(to=user_id, messages=message)
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
-        line_bot_api.push_message(push_message_request=push_message_request)
-        print(f"メッセージを送信しました。user_id: {user_id}, message: {message}")
+        try:
+            line_bot_api.push_message(push_message_request=push_message_request)
+            print(f"メッセージを送信しました。user_id: {user_id}, message: {message}")
+        except Exception as e:
+            # NOTE メッセージ送信エラーは無視する
+            print(
+                f"メッセージの送信に失敗しました。user_id: {user_id}, message: {message}, error: {e}"
+            )
