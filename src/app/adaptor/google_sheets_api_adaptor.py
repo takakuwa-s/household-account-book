@@ -3,6 +3,7 @@ import gspread
 import os
 from oauth2client.service_account import ServiceAccountCredentials
 
+from src.app.config.logger import get_app_logger
 from src.app.model.usecase_model import AccountBookInput
 
 # .envファイルを読み込む
@@ -18,6 +19,7 @@ SCOPE = [
 
 # 認証情報ファイルのパス
 CREDS_FILE = "resource/gcp-credentials.json"
+logger = get_app_logger(__name__)
 
 
 def append_data_to_spreadsheet(spreadsheet_id, sheet_name, data_list):
@@ -41,7 +43,7 @@ def append_data_to_spreadsheet(spreadsheet_id, sheet_name, data_list):
 
     sheet.append_rows(data_list)
 
-    print(
+    logger.info(
         f"データをスプレッドシート '{spreadsheet_id}' のシート '{sheet_name}' に追加しました。"
     )
 
@@ -60,8 +62,8 @@ def register_expenditure(input: AccountBookInput):
                 item.name,
                 input.store,
                 item.price,
-                input.major_classification,
-                input.minor_classification,
+                "その他" if item.name == "消費税" else input.major_classification,
+                "税金" if item.name == "消費税" else input.minor_classification,
                 input.payer,
                 input.for_whom,
                 input.payment_method,

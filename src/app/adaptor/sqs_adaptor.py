@@ -2,11 +2,14 @@ import os
 import boto3
 from dotenv import load_dotenv
 
+from src.app.config.logger import get_app_logger
+
 sqs = boto3.client("sqs")
 
 # .envファイルを読み込む
 load_dotenv()
 QUEUE_URL = os.environ["SQS_QUEUE_URL"]
+logger = get_app_logger(__name__)
 
 
 def send_message_to_sqs(message_body: str):
@@ -18,7 +21,7 @@ def send_message_to_sqs(message_body: str):
         dict: SQSからのレスポンス
     """
     response = sqs.send_message(QueueUrl=QUEUE_URL, MessageBody=message_body)
-    print("Message sent to SQS.")
+    logger.info("Message sent to SQS.")
     return response
 
 
@@ -37,5 +40,5 @@ def send_messages_to_sqs(message_bodies: list[str]):
             for i, message_body in enumerate(message_bodies)
         ],
     )
-    print(f"{len(message_bodies)} messages sent to SQS.")
+    logger.info(f"{len(message_bodies)} messages sent to SQS.")
     return response

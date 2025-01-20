@@ -2,7 +2,10 @@ import json
 import traceback
 
 from linebot.v3.exceptions import InvalidSignatureError
+from src.app.config.logger import get_app_logger
 from src.app.handler.line_messaging_api_handler import handler
+
+logger = get_app_logger(__name__)
 
 
 def lambda_handler(event, context):

@@ -15,6 +15,7 @@ from linebot.v3.webhooks import MessageEvent, ImageMessageContent, PostbackEvent
 from linebot.v3.webhooks.models.text_message_content import TextMessageContent
 from linebot.models.events import FollowEvent
 from linebot.models.events import UnfollowEvent
+from src.app.config.logger import LogContext, get_app_logger
 from src.app.usecase.hundle_line_message_usecase import HundleLineMessageUsecase
 from src.app.adaptor.line_messaging_api_adaptor import (
     show_loading_animation,
@@ -28,6 +29,8 @@ CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(channel_secret=CHANNEL_SECRET)
 usecase = HundleLineMessageUsecase()
+
+logger = get_app_logger(__name__)
 
 
 def reply_message(reply_token: str, messages: list[Message]):
@@ -43,7 +46,7 @@ def reply_message(reply_token: str, messages: list[Message]):
                 )
             )
         except ApiException as e:
-            print(
+            logger.info(
                 f"LINE Messagigng APIでエラーが発生しました。status code = {str(e.status)}, body = {str(ErrorResponse.from_json(e.body))}"
             )
 
@@ -64,6 +67,9 @@ def handle_unfollow_message(event: UnfollowEvent):
 def handle_text_message(event: MessageEvent):
     if event.source.type == "user":
         show_loading_animation(event.source.user_id)
+        LogContext.set(
+            line_user_id=event.source.user_id, line_message_id=event.message.id
+        )
         messages = usecase.handle_text_message(event.message, event.source.user_id)
     else:
         messages = usecase.group_message()
@@ -74,6 +80,9 @@ def handle_text_message(event: MessageEvent):
 def handle_image_message(event: MessageEvent):
     if event.source.type == "user":
         show_loading_animation(event.source.user_id)
+        LogContext.set(
+            line_user_id=event.source.user_id, line_message_id=event.message.id
+        )
         messages = usecase.handle_image_message(event.message, event.source.user_id)
     else:
         messages = usecase.group_message()
@@ -84,6 +93,9 @@ def handle_image_message(event: MessageEvent):
 def handle_postback_event(event: PostbackEvent):
     if event.source.type == "user":
         show_loading_animation(event.source.user_id)
+        LogContext.set(
+            line_user_id=event.source.user_id, line_message_id=event.message.id
+        )
         messages = usecase.handle_postback_event(event.postback, event.source.user_id)
     else:
         messages = usecase.group_message()

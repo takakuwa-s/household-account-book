@@ -13,6 +13,7 @@ from azure.ai.documentintelligence.models import (
     StringIndexType,
 )
 
+from src.app.config.logger import get_app_logger
 from src.app.model.usecase_model import ReceiptResult
 
 # .envファイルを読み込む
@@ -26,6 +27,7 @@ document_intelligence_client: DocumentIntelligenceClient = DocumentIntelligenceC
     credential=AzureKeyCredential(AZURE_KEY_CREDENTIAL),
     api_version=AZURE_API_VERSION,
 )
+logger = get_app_logger(__name__)
 
 
 def analyze_receipt(data: bytes) -> list[ReceiptResult]:
@@ -87,12 +89,12 @@ def analyze_receipt(data: bytes) -> list[ReceiptResult]:
             receipt.append_tax(sum)
             if receipt.total is None and len(receipt.items) == 0:
                 continue
-            print(
+            logger.info(
                 f"{receipt.date}に{receipt.store}で購入した合計{receipt.total}円のレシートに関して、解析に成功しました"
             )
             receipt_list.append(receipt)
     if len(receipt_list) == 0:
-        print("レシートの解析ができませんでした。")
+        logger.info("レシートの解析ができませんでした。")
         return None
-    print("AIによる画像に写っている全てのレシート解析が完了しました。")
+    logger.info("AIによる画像に写っている全てのレシート解析が完了しました。")
     return receipt_list

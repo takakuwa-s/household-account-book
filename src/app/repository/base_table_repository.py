@@ -2,6 +2,7 @@ import traceback
 from typing import Any
 from boto3.dynamodb.conditions import Key
 from src.app.model.db_model import BaseTable
+from src.app.config.logger import get_app_logger
 
 
 class BaseTableRepository:
@@ -9,6 +10,7 @@ class BaseTableRepository:
         self.dynamodb = dynamodb
         self.table_model = table_model
         self.table = self.dynamodb.Table(self.table_model.get_name())
+        self.logger = get_app_logger(__name__)
 
     def create_table(self):
         """
@@ -49,28 +51,28 @@ class BaseTableRepository:
                 # オンデマンドキャパシティモードの場合は不要
                 ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
             )
-            print(f"Table {self.table_model.get_name()} creating...")
+            self.logger.info(f"Table {self.table_model.get_name()} creating...")
 
             # テーブル作成完了を待機
             table.wait_until_exists()
-            print(f"Table {self.table_model.get_name()} created.")
+            self.logger.info(f"Table {self.table_model.get_name()} created.")
         except Exception as e:
             # テーブルが既に存在する場合はエラーを無視
             if "Table already exists" in str(e):
-                print(f"Table {self.table_model.get_name()} already exists.")
+                self.logger.info(f"Table {self.table_model.get_name()} already exists.")
             else:
                 traceback.print_exc()
-                print(f"Error creating table: {e}")
+                self.logger.info(f"Error creating table: {e}")
 
     def drop_table(self):
         """
         DynamoDBテーブルを削除します。
         """
         self.table.delete()
-        print(f"Deleting table {self.table_model.get_name()}...")
+        self.logger.info(f"Deleting table {self.table_model.get_name()}...")
         # テーブル削除完了を待機
         self.table.wait_until_not_exists()
-        print(f"Table {self.table_model.get_name()} deleted.")
+        self.logger.info(f"Table {self.table_model.get_name()} deleted.")
 
     def batch_write_items(self, items: list[dict]):
         """
@@ -82,7 +84,7 @@ class BaseTableRepository:
         with self.table.batch_writer() as batch:
             for item in items:
                 batch.put_item(Item=item)
-        print(
+        self.logger.info(
             f"{len(items)} items written to table {self.table_model.get_name()}, size = {len(items)}"
         )
 
@@ -93,7 +95,7 @@ class BaseTableRepository:
             data: 追加するデータ
         """
         self.table.put_item(Item=data)
-        print(
+        self.logger.info(
             f"Item added successfully, table name = {self.table_model.get_name()}, data = {data}"
         )
 
@@ -125,7 +127,9 @@ class BaseTableRepository:
             ExpressionAttributeValues=expression_attribute_values,
             ReturnValues="ALL_NEW",
         )
-        print(f"UpdateItem succeeded, table name = {self.table_model.get_name()}")
+        self.logger.info(
+            f"UpdateItem succeeded, table name = {self.table_model.get_name()}"
+        )
         return self.table_model(**response["Attributes"])
 
     def get_all(self):
@@ -174,7 +178,7 @@ class BaseTableRepository:
         )
         items = response["Items"]
         if items is None:
-            print(
+            self.logger.info(
                 f"items not found. partition key value = {partition_key_value}, table name = {self.table_model.get_name()}"
             )
             return None
@@ -209,11 +213,13 @@ class BaseTableRepository:
         response = self.table.get_item(Key=key)
         item = response.get("Item")
         if item is None:
-            print(
+            self.logger.info(
                 f"items not found. partition key value = {partition_key_value}, sort key value = {sort_key_value}, table name = {self.table_model.get_name()}"
             )
             return None
-        print(f"Item found, table name = {self.table_model.get_name()}, item = {item}")
+        self.logger.info(
+            f"Item found, table name = {self.table_model.get_name()}, item = {item}"
+        )
         return self.table_model(**item)
 
     def delete_item(self, partition_key_value: Any, sort_key_value: Any = None):
@@ -226,4 +232,6 @@ class BaseTableRepository:
         """
         key = self.__get_key(partition_key_value, sort_key_value)
         self.table.delete_item(Key=key)
-        print(f"Item with key {key} deleted from table {self.table_model.get_name()}.")
+        self.logger.info(
+            f"Item with key {key} deleted from table {self.table_model.get_name()}."
+        )

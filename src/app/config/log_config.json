@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+      "custom": {
+        "class" : "src.app.config.logger.CustomFormatter"
+      }
+  },
+
+  "handlers": {
+      "console": {
+          "class": "logging.StreamHandler",
+          "level": "INFO",
+          "formatter": "custom",
+          "stream": "ext://sys.stdout"
+      }
+  },
+
+  "loggers": {
+      "__main__": {
+          "level": "INFO",
+          "handlers": ["console"],
+          "propagate": false
+      }
+  },
+
+  "root": {
+      "level": "INFO",
+      "handlers": ["console"],
+      "propagate": false
+  }
+}

@@ -20,11 +20,14 @@ from linebot.v3.messaging.models.rich_menu_request import RichMenuRequest
 from linebot.v3.messaging.models.push_message_request import PushMessageRequest
 from linebot.v3.messaging.models.message import Message
 
+from src.app.config.logger import get_app_logger
+
 # .envファイルを読み込む
 load_dotenv()
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
+logger = get_app_logger(__name__)
 
 
 def fetch_image(message_id: str) -> bytearray:
@@ -41,7 +44,7 @@ def fetch_image(message_id: str) -> bytearray:
             message_id=message_id,
             _request_timeout=6,
         )
-        print("lineからのイメージデータ取得に成功しました。")
+        logger.info("lineからのイメージデータ取得に成功しました。")
         return binary
 
 
@@ -59,7 +62,7 @@ def fetch_user_profile(user_id: str) -> UserProfileResponse:
             user_id=user_id,
             _request_timeout=6,
         )
-        print(f"lineからのユーザー情報の取得に成功しました。: {profile}")
+        logger.info(f"lineからのユーザー情報の取得に成功しました。: {profile}")
         return profile
 
 
@@ -80,7 +83,7 @@ def show_loading_animation(user_id: str):
         response = line_bot_api.show_loading_animation(
             show_loading_animation_request=request
         )
-        print(
+        logger.info(
             f"ローディング表示を有効にしました。user_id: {user_id}, response: {response}"
         )
 
@@ -97,7 +100,7 @@ def validate_rich_menu_object(data: dict) -> str:
         line_bot_api.validate_rich_menu_object(
             rich_menu_request=rich_menu_request,
         )
-        print("リッチメニューは正しく構成されています")
+        logger.info("リッチメニューは正しく構成されています")
 
 
 def create_rich_menu(data: dict) -> str:
@@ -114,7 +117,9 @@ def create_rich_menu(data: dict) -> str:
         response: RichMenuIdResponse = line_bot_api.create_rich_menu(
             rich_menu_request=rich_menu_request,
         )
-        print(f"リッチメニューを作成しました。rich_menu_id: {response.rich_menu_id}")
+        logger.info(
+            f"リッチメニューを作成しました。rich_menu_id: {response.rich_menu_id}"
+        )
         return response.rich_menu_id
 
 
@@ -132,7 +137,7 @@ def set_rich_menu_image(rich_menu_id: str, body: bytes):
             body=bytearray(body),
             _headers={"Content-Type": "image/png"},
         )
-        print(f"リッチメニューの画像を設定しました。rich_menu_id: {rich_menu_id}")
+        logger.info(f"リッチメニューの画像を設定しました。rich_menu_id: {rich_menu_id}")
 
 
 def set_default_rich_menu(rich_menu_id: str):
@@ -146,7 +151,9 @@ def set_default_rich_menu(rich_menu_id: str):
         line_bot_api.set_default_rich_menu(
             rich_menu_id=rich_menu_id,
         )
-        print(f"デフォルトのリッチメニューを設定しました。rich_menu_id: {rich_menu_id}")
+        logger.info(
+            f"デフォルトのリッチメニューを設定しました。rich_menu_id: {rich_menu_id}"
+        )
 
 
 def delete_rich_menu(rich_menu_id: str):
@@ -160,7 +167,7 @@ def delete_rich_menu(rich_menu_id: str):
         line_bot_api.delete_rich_menu(
             rich_menu_id=rich_menu_id,
         )
-        print(f"リッチメニューを削除しました。rich_menu_id: {rich_menu_id}")
+        logger.info(f"リッチメニューを削除しました。rich_menu_id: {rich_menu_id}")
 
 
 def cancel_default_rich_menu():
@@ -170,7 +177,7 @@ def cancel_default_rich_menu():
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         line_bot_api.cancel_default_rich_menu()
-        print("デフォルトのリッチメニュー設定を解除しました。")
+        logger.info("デフォルトのリッチメニュー設定を解除しました。")
 
 
 def get_rich_menu_list() -> RichMenuListResponse:
@@ -182,7 +189,7 @@ def get_rich_menu_list() -> RichMenuListResponse:
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         response: RichMenuListResponse = line_bot_api.get_rich_menu_list()
-        print("リッチメニューの一覧を取得しました。")
+        logger.info("リッチメニューの一覧を取得しました。")
         return response
 
 
@@ -198,9 +205,11 @@ def push_message(user_id: str, message: list[Message]):
         line_bot_api = MessagingApi(api_client)
         try:
             line_bot_api.push_message(push_message_request=push_message_request)
-            print(f"メッセージを送信しました。user_id: {user_id}, message: {message}")
+            logger.info(
+                f"メッセージを送信しました。user_id: {user_id}, message: {message}"
+            )
         except Exception as e:
             # NOTE メッセージ送信エラーは無視する
-            print(
+            logger.info(
                 f"メッセージの送信に失敗しました。user_id: {user_id}, message: {message}, error: {e}"
             )

@@ -3,6 +3,7 @@ import boto3
 from linebot.v3.messaging.models.message import Message
 from src.app.adaptor.azure_ducument_intelligence_client import analyze_receipt
 from src.app.adaptor.line_messaging_api_adaptor import fetch_image, push_message
+from src.app.config.logger import LogContext, get_app_logger
 from src.app.model.usecase_model import ReceiptResult
 from src.app.model.db_model import ImageSet, TemporalExpenditure
 from src.app.repository.image_sets_repository import ImageSetsRepository
@@ -24,6 +25,7 @@ class AnalyzeReceiptUsecase:
         )
         self.image_sets_repository = ImageSetsRepository(dynamodb)
         self.message_repository = MessagesRepository()
+        self.logger = get_app_logger(__name__)
 
     def execute(self, id: str) -> bool:
         """
@@ -33,14 +35,15 @@ class AnalyzeReceiptUsecase:
         Returns:
             bool: 解析が完了したかどうか
         """
-        print(f"レシート解析を開始します。id = {id}")
+        LogContext.set(temporal_expenditure_id=id)
+        self.logger.info(f"レシート解析を開始します。id = {id}")
         try:
             # 1. 仮支出データを取得
             record: TemporalExpenditure = (
                 self.temporal_expenditure_table_repository.get_item(id)
             )
             if record is None:
-                print(f"仮支出データが見つかりません。id = {id}")
+                self.logger.info("仮支出データが見つかりません")
                 return True
 
             # 2. レシート画像を取得
@@ -93,7 +96,7 @@ class AnalyzeReceiptUsecase:
                 )
                 status = image_set.get_overall_status()
                 if status == TemporalExpenditure.Status.ANALYZING:
-                    print(
+                    self.logger.info(
                         f"画像が複数枚連携されているため、通知せずに処理を終了します。id = {id}"
                     )
                     return
@@ -109,10 +112,10 @@ class AnalyzeReceiptUsecase:
 
             # 7. 通知メッセージを送信
             push_message(record.line_user_id, message)
-            print(f"全てのレシート解析処理が完了しました。id = {id}")
+            self.logger.info(f"全てのレシート解析処理が完了しました。id = {id}")
 
         except Exception:
-            print(f"レシート解析処理に失敗しました。id = {id}")
+            self.logger.info(f"レシート解析処理に失敗しました。id = {id}")
             traceback.print_exc()
             return False
         return True
