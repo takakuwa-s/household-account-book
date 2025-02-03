@@ -1,0 +1,8 @@
+line_bot_handler_function:
+  handler: "main.line_bot_handler"
+  memory_size: 128
+  timeout: 30
+analyze_receipt_function:
+  handler: "main.analyze_receipt"
+  memory_size: 128
+  timeout: 30

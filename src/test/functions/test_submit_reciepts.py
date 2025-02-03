@@ -1,5 +1,5 @@
 import json
-from src.app.functions import submit_reciepts as target
+from src.app.functions import line_bot_handler as target
 
 
 def test_lambda_handler():

@@ -1,0 +1,231 @@
+item_classifications:
+  name: "item_classifications"
+  hash_key: "minor"
+  attributes:
+    - name: "minor"
+      type: "S"
+  items:
+    item1:
+      minor:
+        S: "交際費"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item2:
+      minor:
+        S: "外食費"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item3:
+      minor:
+        S: "家飲み"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item4:
+      minor:
+        S: "デート代"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item5:
+      minor:
+        S: "旅費"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item6:
+      minor:
+        S: "プレゼント代"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item7:
+      minor:
+        S: "おやつ"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item8:
+      minor:
+        S: "その他娯楽"
+      major:
+        S: "娯楽"
+      color:
+        S: "#e8668f"
+    item9:
+      minor:
+        S: "食費"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item10:
+      minor:
+        S: "日用品"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item11:
+      minor:
+        S: "ファッション"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item12:
+      minor:
+        S: "家具・家電"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item13:
+      minor:
+        S: "スマホ代"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item14:
+      minor:
+        S: "交通費"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item15:
+      minor:
+        S: "医療費"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item16:
+      minor:
+        S: "美容費"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
+    item17:
+      minor:
+        S: "更新料"
+      major:
+        S: "インフラ"
+      color:
+        S: "#49e3a0"
+    item18:
+      minor:
+        S: "家賃"
+      major:
+        S: "インフラ"
+      color:
+        S: "#49e3a0"
+    item19:
+      minor:
+        S: "電気"
+      major:
+        S: "インフラ"
+      color:
+        S: "#49e3a0"
+    item20:
+      minor:
+        S: "ガス"
+      major:
+        S: "インフラ"
+      color:
+        S: "#49e3a0"
+    item21:
+      minor:
+        S: "水道"
+      major:
+        S: "インフラ"
+      color:
+        S: "#49e3a0"
+    item22:
+      minor:
+        S: "インターネット"
+      major:
+        S: "インフラ"
+      color:
+        S: "#49e3a0"
+    item23:
+      minor:
+        S: "NHK"
+      major:
+        S: "インフラ"
+      color:
+        S: "#49e3a0"
+    item24:
+      minor:
+        S: "投資"
+      major:
+        S: "将来のため"
+      color:
+        S: "#a864ed"
+    item25:
+      minor:
+        S: "自己研鑽"
+      major:
+        S: "将来のため"
+      color:
+        S: "#a864ed"
+    item26:
+      minor:
+        S: "保険"
+      major:
+        S: "将来のため"
+      color:
+        S: "#a864ed"
+    item27:
+      minor:
+        S: "冠婚葬祭"
+      major:
+        S: "その他"
+      color:
+        S: "#f2cd77"
+    item28:
+      minor:
+        S: "税金"
+      major:
+        S: "その他"
+      color:
+        S: "#f2cd77"
+temporal_expenditures:
+  name: "temporal_expenditures"
+  hash_key: "id"
+  range_key: null
+  attributes:
+    - name: "id"
+      type: "S"
+users:
+  name: "users"
+  hash_key: "line_user_id"
+  range_key: null
+  attributes:
+    - name: "line_user_id"
+      type: "S"
+message_sessions:
+  name: "message_sessions"
+  hash_key: "line_user_id"
+  range_key: null
+  attributes:
+    - name: "line_user_id"
+      type: "S"
+image_sets:
+  name: "image_sets"
+  hash_key: "image_set_id"
+  range_key: null
+  attributes:
+    - name: "image_set_id"
+      type: "S"

@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import gspread
 import os
 from oauth2client.service_account import ServiceAccountCredentials
@@ -6,8 +5,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 from src.app.config.logger import get_app_logger
 from src.app.model.usecase_model import AccountBookInput
 
-# .envファイルを読み込む
-load_dotenv()
 SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
 EXPENDITURE_SHEET_NAME = os.environ["EXPENDITURE_SHEET_NAME"]
 
@@ -41,7 +38,10 @@ def append_data_to_spreadsheet(spreadsheet_id, sheet_name, data_list):
     # シートを取得
     sheet = spreadsheet.worksheet(sheet_name)
 
-    sheet.append_rows(data_list)
+    sheet.append_rows(
+        values=data_list,
+        value_input_option="USER_ENTERED",
+    )
 
     logger.info(
         f"データをスプレッドシート '{spreadsheet_id}' のシート '{sheet_name}' に追加しました。"

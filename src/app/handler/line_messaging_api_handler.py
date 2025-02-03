@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import os
 
 from linebot.v3 import WebhookHandler
@@ -21,8 +20,6 @@ from src.app.adaptor.line_messaging_api_adaptor import (
     show_loading_animation,
 )
 
-# .envファイルを読み込む
-load_dotenv()
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
 
@@ -94,7 +91,7 @@ def handle_postback_event(event: PostbackEvent):
     if event.source.type == "user":
         show_loading_animation(event.source.user_id)
         LogContext.set(
-            line_user_id=event.source.user_id, line_message_id=event.message.id
+            line_user_id=event.source.user_id,
         )
         messages = usecase.handle_postback_event(event.postback, event.source.user_id)
     else:

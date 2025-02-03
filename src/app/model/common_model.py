@@ -11,6 +11,7 @@ class CommonModel(BaseModel):
 
 
 class LogExtraInfo(CommonModel):
+    lambda_function_name: Optional[str] = Field(default=None)
     line_user_id: Optional[str] = Field(default=None)
     line_message_id: Optional[str] = Field(default=None)
     temporal_expenditure_id: Optional[str] = Field(default=None)

@@ -11,12 +11,15 @@ class LogContext:
     @classmethod
     def set(
         cls,
+        lambda_function_name: str = None,
         line_user_id: str = None,
         line_message_id: str = None,
         temporal_expenditure_id: str = None,
     ):
         """ログコンテキストを設定する"""
         info: LogExtraInfo = LogContext.context.get()
+        if lambda_function_name:
+            info.lambda_function_name = lambda_function_name
         if line_user_id:
             info.line_user_id = line_user_id
         if line_message_id:

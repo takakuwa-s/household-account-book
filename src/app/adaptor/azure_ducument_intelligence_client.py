@@ -1,6 +1,5 @@
 import os
 from typing import Dict
-from dotenv import load_dotenv
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.documentintelligence import (
     AnalyzeDocumentLROPoller,
@@ -16,8 +15,6 @@ from azure.ai.documentintelligence.models import (
 from src.app.config.logger import get_app_logger
 from src.app.model.usecase_model import ReceiptResult
 
-# .envファイルを読み込む
-load_dotenv()
 AZURE_DOCUMENT_INTEIGENCE_ENDPOINT = os.environ["AZURE_DOCUMENT_INTEIGENCE_ENDPOINT"]
 AZURE_KEY_CREDENTIAL = os.environ["AZURE_KEY_CREDENTIAL"]
 AZURE_API_VERSION = os.environ["AZURE_API_VERSION"]

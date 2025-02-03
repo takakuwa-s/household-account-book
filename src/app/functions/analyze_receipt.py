@@ -1,12 +1,9 @@
 import os
 import boto3
-from dotenv import load_dotenv
 
-from src.app.config.logger import get_app_logger
+from src.app.config.logger import LogContext, get_app_logger
 from src.app.usecase.analyze_receipt_usecase import AnalyzeReceiptUsecase
 
-# .envファイルを読み込む
-load_dotenv()
 QUEUE_URL = os.environ["SQS_QUEUE_URL"]
 
 # SQSクライアントを作成
@@ -16,6 +13,7 @@ logger = get_app_logger(__name__)
 
 
 def lambda_handler(event, context):
+    LogContext.set(lambda_function_name="analyze_receipt")
     logger.info(f"sqsからデータを受信しました。event = {event}")
 
     for record in event["Records"]:

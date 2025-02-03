@@ -1,13 +1,10 @@
 import os
 import boto3
-from dotenv import load_dotenv
 
 from src.app.config.logger import get_app_logger
 
 sqs = boto3.client("sqs")
 
-# .envファイルを読み込む
-load_dotenv()
 QUEUE_URL = os.environ["SQS_QUEUE_URL"]
 logger = get_app_logger(__name__)
 
