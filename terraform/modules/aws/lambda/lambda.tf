@@ -53,7 +53,6 @@ resource "aws_lambda_function" "lambda_functions" {
       # AZURE関連
       AZURE_DOCUMENT_INTEIGENCE_ENDPOINT = var.env_variables.azure_document_inteligence_endpoint
       AZURE_KEY_CREDENTIAL               = var.env_variables.azure_key_credential
-      AZURE_API_VERSION                  = var.env_variables.azure_api_version
 
       # SPREADSHEET関連
       SPREADSHEET_ID         = var.env_variables.spreadsheet_id

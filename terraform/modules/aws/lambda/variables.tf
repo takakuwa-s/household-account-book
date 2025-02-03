@@ -23,7 +23,6 @@ variable "env_variables" {
     channel_secret                      = string
     azure_document_inteligence_endpoint = string
     azure_key_credential                = string
-    azure_api_version                   = string
     spreadsheet_id                      = string
     expenditure_sheet_name              = string
   })

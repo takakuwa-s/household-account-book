@@ -17,7 +17,7 @@ from src.app.model.usecase_model import ReceiptResult
 
 AZURE_DOCUMENT_INTEIGENCE_ENDPOINT = os.environ["AZURE_DOCUMENT_INTEIGENCE_ENDPOINT"]
 AZURE_KEY_CREDENTIAL = os.environ["AZURE_KEY_CREDENTIAL"]
-AZURE_API_VERSION = os.environ["AZURE_API_VERSION"]
+AZURE_API_VERSION = "2024-11-30"
 
 document_intelligence_client: DocumentIntelligenceClient = DocumentIntelligenceClient(
     endpoint=AZURE_DOCUMENT_INTEIGENCE_ENDPOINT,

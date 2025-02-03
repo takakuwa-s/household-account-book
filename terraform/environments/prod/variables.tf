@@ -1,9 +1,3 @@
-variable "env" {
-  type        = string
-  description = "環境名"
-  default     = "prod"
-}
-
 variable "channel_access_token" {
   type        = string
   description = "LINE Botのチャンネルアクセストークン"
@@ -14,24 +8,10 @@ variable "channel_secret" {
   description = "LINE Botのチャンネルシークレット"
 }
 
-
-variable "azure_document_inteligence_endpoint" {
+variable "azure_subscription_id" {
   type        = string
-  description = "AzureのDocument Intelligenceのエンドポイント"
+  description = "AzureのサブスクリプションID"
 }
-
-
-variable "azure_key_credential" {
-  type    = string
-  default = "AzureのDocument Intelligence APIを利用するためのキー"
-}
-
-
-variable "azure_api_version" {
-  type        = string
-  description = "AzureのDocument IntelligenceのAPIバージョン"
-}
-
 
 variable "spreadsheet_id" {
   type        = string
