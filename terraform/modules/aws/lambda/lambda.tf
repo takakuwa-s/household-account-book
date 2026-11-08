@@ -1,5 +1,6 @@
 locals {
-  lambda_functions = yamldecode(file("../../modules/aws/lambda/lambda_functions.yml"))
+  lambda_functions       = yamldecode(file("../../modules/aws/lambda/lambda_functions.yml"))
+  python_runtime_version = "3.14"
 }
 
 # https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file
@@ -30,7 +31,7 @@ resource "aws_lambda_function" "lambda_functions" {
   function_name    = "${var.env_variables.env}_${each.key}"
   filename         = data.archive_file.python_code_zip.output_path
   source_code_hash = data.archive_file.python_code_zip.output_base64sha256
-  runtime          = "python3.12"
+  runtime          = "python${local.python_runtime_version}"
   role             = var.iam_role_arn
   handler          = each.value.handler
   memory_size      = each.value.memory_size

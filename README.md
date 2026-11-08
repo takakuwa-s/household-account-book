@@ -33,8 +33,8 @@ Terraformのapply時にはLINEのWebhook URLとリッチメニューも設定さ
 
 ## 必要なもの
 
-- Python 3.12（LambdaランタイムもPython 3.12）
-- Terraform 1.10.4
+- Python 3.14（LambdaランタイムもPython 3.14）
+- Terraform 1.10.4以上（最新安定版1.17.1を推奨）
 - AWS認証情報と、`ap-northeast-1` でリソースを作成できる権限
 - Azure CLIでログインできるAzureサブスクリプションと、リソース作成権限
 - LINE Messaging APIチャネル
@@ -45,8 +45,9 @@ Terraformのapply時にはLINEのWebhook URLとリッチメニューも設定さ
 リポジトリのルートで仮想環境を作成し、アプリケーション依存関係をインストールします。
 
 ```bash
-python3.12 -m venv .venv
+python3.14 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m pip install pytest
 python -m pytest src/test
@@ -96,7 +97,7 @@ terraform plan
 terraform apply
 ```
 
-TerraformはLambda用のPython 3.12 / ARM64依存Layerとコードアーカイブを生成します。適用時にはLINE設定スクリプトも実行され、LINEチャネルのWebhook URLとリッチメニューが更新されます。適用端末からLINE APIへ接続でき、必要なPython依存関係をインストールできることを確認してください。
+TerraformはLambda用のPython 3.14 / ARM64依存Layerとコードアーカイブを生成します。Python 3.15はLambdaでプレビュー中のため、本番環境ではGA済みのPython 3.14を使用します。適用時にはLINE設定スクリプトも実行され、LINEチャネルのWebhook URLとリッチメニューが更新されます。適用端末からLINE APIへ接続でき、必要なPython依存関係をインストールできることを確認してください。
 
 ### 3. リソースを削除する
 

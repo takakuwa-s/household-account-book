@@ -1,6 +1,6 @@
 import gspread
 import os
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
 from src.app.config.logger import get_app_logger
 from src.app.model.usecase_model import AccountBookInput
@@ -15,7 +15,7 @@ SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive",
 ]
-creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPE)
+creds = Credentials.from_service_account_file(CREDS_FILE, scopes=SCOPE)
 client = gspread.authorize(creds)
 
 logger = get_app_logger(__name__)
