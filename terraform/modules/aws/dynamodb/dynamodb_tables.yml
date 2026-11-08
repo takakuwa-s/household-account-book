@@ -201,6 +201,13 @@ item_classifications:
         S: "その他"
       color:
         S: "#f2cd77"
+    item29:
+      minor:
+        S: "養育費"
+      major:
+        S: "生活費"
+      color:
+        S: "#3aaee8"
 temporal_expenditures:
   name: "temporal_expenditures"
   hash_key: "id"
@@ -215,6 +222,21 @@ users:
   attributes:
     - name: "line_user_id"
       type: "S"
+  items:
+    item1:
+      line_name:
+        S: "高桑駿"
+      line_user_id:
+        S: "U544c7c84c496d89b3f56b034b75f8dae"
+      name:
+        S: "くん"
+    item2:
+      line_name:
+        S: "高桑彩華"
+      line_user_id:
+        S: "Ubeb3d4333eaa0adc49614aa0ec4cb7d2"
+      name:
+        S: "ちゃん"
 message_sessions:
   name: "message_sessions"
   hash_key: "line_user_id"

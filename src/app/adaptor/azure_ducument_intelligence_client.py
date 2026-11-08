@@ -76,7 +76,7 @@ def analyze_receipt(data: bytes) -> list[ReceiptResult]:
                     )
                     item.price = price
                     receipt.items.append(item)
-            receipt.date = field.get("TransactionDate", {}).get("valueDate")
+            receipt.date = field.get("TransactionDate", {}).get("valueDate", "")
             receipt.store = field.get("MerchantName", {}).get("valueString", "不明")
             receipt.set_total(
                 field.get("Total", {}).get("valueCurrency", {}).get("amount")
